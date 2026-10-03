@@ -6,7 +6,7 @@ The default Hermes profile has host terminal access; the specialist profiles use
 
 0. If the VPS only gives you `root`, run `scripts/create-admin-user.sh <user>` as root and confirm key-based SSH login and `sudo` as that user before continuing.
 1. Optionally copy `ansible/local-vars.example.yml` to `ansible/local-vars.yml` and set overrides (model provider, `git_commit_signing`, profiles).
-2. Run `make install` as the normal sudo user. It disables root and password SSH login (after checking that your user has an SSH key), enables UFW with only SSH open, and starts Fail2ban. Keep your session open and confirm a new SSH login works. If a different sudo account applies the base playbook, set `VPS_USER=<user>`, then switch to `<user>` for all Hermes commands and setup.
+2. Run `make install` as the normal sudo user. It disables root SSH login and, unless `ssh_password_login: true`, password login (after checking that your user has an SSH key), enables UFW with only SSH open, and starts Fail2ban. Keep your session open and confirm a new SSH login works. If a different sudo account applies the base playbook, set `VPS_USER=<user>`, then switch to `<user>` for all Hermes commands and setup.
 3. Reconnect after Docker group membership changes, then run `make image-qa` as the target user to build the specialist terminal image with that user's UID/GID.
 4. If Hermes is not installed, run `make hermes-install` to install the pinned `hermes_commit`. If a Hermes CLI is already installed, skip this step.
 5. Run `make configure` once to create and configure the default and specialist Hermes profiles.

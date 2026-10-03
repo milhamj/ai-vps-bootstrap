@@ -1,6 +1,7 @@
 ---
-# SSH hardening. The lockout check runs before anything changes: every account that will log in
-# afterwards must already have a public key, because password login is about to be disabled.
+# SSH hardening. In key-only mode the lockout check runs before anything changes: every account
+# that will log in afterwards must already have a public key, because password login is about to
+# be disabled. With ssh_password_login, only root login is blocked and the check is skipped.
 - name: Check that SSH users have a public key before disabling password login
   ansible.builtin.shell: |
     set -u
@@ -17,7 +18,7 @@
     ssh_key_users: "{{ [factory_user, lookup('ansible.builtin.env', 'USER')] | select | reject('equalto', 'root') | unique | list }}"
   register: ssh_users_without_keys
   changed_when: false
-  when: ssh_hardening | bool
+  when: ssh_hardening | bool and not ssh_password_login | bool
 
 - name: Refuse to disable password login without SSH keys
   ansible.builtin.assert:
@@ -26,8 +27,9 @@
       No public key in ~/.ssh/authorized_keys for:{{ ssh_users_without_keys.stdout }}.
       Disabling password login now would lock these users out. Add a key (ssh-copy-id from your
       machine, or scripts/create-admin-user.sh as root), confirm key login works, then rerun.
-      To skip SSH hardening instead, set ssh_hardening: false in ansible/local-vars.yml.
-  when: ssh_hardening | bool
+      To keep password login for non-root users instead, set ssh_password_login: true in
+      ansible/local-vars.yml.
+  when: ssh_hardening | bool and not ssh_password_login | bool
 
 - name: Ensure the SSH server is installed
   ansible.builtin.apt:
@@ -71,10 +73,10 @@
   ansible.builtin.assert:
     that:
       - "'permitrootlogin no' in sshd_effective.stdout_lines"
-      - "'passwordauthentication no' in sshd_effective.stdout_lines"
+      - "('passwordauthentication ' + ('yes' if ssh_password_login | bool else 'no')) in sshd_effective.stdout_lines"
       - "'kbdinteractiveauthentication no' in sshd_effective.stdout_lines"
     fail_msg: >-
-      sshd still allows root or password login. Another file in /etc/ssh/sshd_config.d/ or
+      The effective sshd settings do not match ssh_hardening / ssh_password_login. Another file in /etc/ssh/sshd_config.d/ or
       /etc/ssh/sshd_config may set these first; check with sudo sshd -T.
   when: ssh_hardening | bool
 

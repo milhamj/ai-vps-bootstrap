@@ -5,6 +5,7 @@
 # factory_relative_path: software-factory
 # docker_group_access: true
 # ssh_hardening: true
+# ssh_password_login: false
 # ssh_port: 22
 # firewall_enabled: true
 # fail2ban_enabled: true

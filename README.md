@@ -38,6 +38,7 @@ Defaults live in `ansible/vars.yml`. To override them without editing tracked fi
 Notable settings:
 
 - `ssh_hardening` (default `true`): disables SSH root login and password login. Before changing anything, it checks that the target user (and the user running the playbook) has a public key in `~/.ssh/authorized_keys`, and stops with an error if not. It then confirms the effective sshd settings with `sshd -T`.
+- `ssh_password_login` (default `false`): set to `true` to keep password login for non-root users, for example to log in from devices without your SSH key. Root login stays blocked, the key check is skipped, and Fail2ban still bans repeated failed attempts. Use a strong password.
 - `firewall_enabled` (default `true`) and `ssh_port` (default `22`): UFW denies incoming traffic except SSH on `ssh_port` and allows outgoing traffic. `ssh_port` only opens the firewall; it does not change the port sshd listens on. Setting `firewall_enabled: false` leaves UFW as it is rather than disabling it.
 - `fail2ban_enabled` (default `true`): Fail2ban with an sshd jail that reads the systemd journal.
 - `git_commit_signing` (default `false`): set to `true` to require GPG-signed commits for the target user. You must restore or generate a GPG key yourself.

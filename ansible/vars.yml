@@ -2,9 +2,12 @@
 factory_relative_path: software-factory
 legacy_factory_relative_path: projects/software-factory
 docker_group_access: true
-# Disable SSH root and password login. Refuses to apply unless the target user (and the user
+# Disable SSH root login (always, with keys or passwords) and, unless ssh_password_login is true,
+# password login for everyone. Key-only mode refuses to apply unless the target user (and the user
 # running the playbook) already has a public key in ~/.ssh/authorized_keys.
 ssh_hardening: true
+# Keep password login for non-root users. Root stays blocked either way; Fail2ban limits guessing.
+ssh_password_login: false
 # SSH port allowed through the firewall. This does not change the port sshd listens on.
 ssh_port: 22
 # UFW: deny incoming except SSH, allow outgoing.

@@ -73,24 +73,22 @@ If the playbook added the user to the Docker group, close the SSH session and re
 
 ```bash
 if [[ ! -x "$HOME/.local/bin/hermes" ]]; then make hermes-install; fi
-make configure
-~/.local/bin/hermes setup
-~/.local/bin/hoe setup
-~/.local/bin/techlead setup
-~/.local/bin/engineer setup
-~/.local/bin/qa setup
-~/.local/bin/hermes gateway setup
-~/.local/bin/hoe gateway setup
+~/.local/bin/hermes setup           # Full setup; sign in with OpenAI Codex (shared by all profiles)
+make configure                      # 1st: create hoe/techlead/engineer/qa, apply managed settings
+~/.local/bin/hermes gateway setup   # Telegram for the main profile
+~/.local/bin/hoe gateway setup      # Telegram for hoe
 ~/.local/bin/hermes gateway install
 ~/.local/bin/hoe gateway install
-make configure
+make configure                      # 2nd: re-apply settings the wizards changed, restart gateways
 make image-qa
 make verify
 ```
 
-The commands above match the default `hermes_profiles`; adjust the `setup` lines if you change the list. Run `make image-qa` as the target user (or with `VPS_USER=<user>`) so the image runs with that user's UID/GID.
+Only the main profile needs `hermes setup`. Named profiles without their own sign-in use the main profile's (`~/.hermes/auth.json`) for that provider, and `make configure` sets everything else for them: model, tools, terminal, and role prompt. Run `<profile> setup` only to give a profile a different account or provider. Gateways are set up only for the profiles you message (the main profile and those with `gateway: true`).
 
-Complete the interactive model sign-in and messaging setup directly on the VPS. Specialist profiles have separate Hermes profile state; configure credentials required by each profile. Do not put credentials in this repository or send them in chat.
+Run `make image-qa` as the target user (or with `VPS_USER=<user>`) so the image runs with that user's UID/GID.
+
+Complete the interactive model sign-in and messaging setup directly on the VPS. Do not put credentials in this repository or send them in chat.
 
 The workflow setup commands are interactive. If you already restored valid profile state and gateway units, run `make configure` and `make verify`. Run Hermes installation, setup, and gateway commands while logged in as `<user>` so its profiles and services belong to the intended user. If a different sudo account applies the base playbook, use `VPS_USER=<user> make install`, then switch to `<user>` for the Hermes commands. Do not run `make install` as root.
 

@@ -1,0 +1,98 @@
+---
+- name: Inspect the legacy factory directory
+  ansible.builtin.stat:
+    path: '{{ factory_home }}/{{ legacy_factory_relative_path }}'
+  register: legacy_factory
+- name: Inspect the requested factory directory
+  ansible.builtin.stat:
+    path: '{{ factory_home }}/{{ factory_relative_path }}'
+  register: requested_factory
+- name: Stop if both old and new factory directories exist
+  ansible.builtin.assert:
+    that:
+      - not (legacy_factory.stat.exists and requested_factory.stat.exists)
+    fail_msg: 'Both factory paths exist. Reconcile them manually before configuring; the playbook will not merge or overwrite either directory.'
+- name: Move existing factory contents to the requested path
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/mv
+      - --
+      - '{{ factory_home }}/{{ legacy_factory_relative_path }}'
+      - '{{ factory_home }}/{{ factory_relative_path }}'
+  when: legacy_factory.stat.exists and not requested_factory.stat.exists
+  changed_when: true
+- name: Create software factory directories
+  ansible.builtin.file:
+    path: '{{ factory_home }}/{{ factory_relative_path }}/{{ item }}'
+    state: directory
+    owner: '{{ factory_user }}'
+    group: '{{ factory_group }}'
+    mode: '0750'
+  loop:
+    - ''
+    - projects
+- name: Create role guidance directories
+  ansible.builtin.file:
+    path: '{{ factory_home }}/{{ factory_relative_path }}/agents/{{ item }}'
+    state: directory
+    owner: '{{ factory_user }}'
+    group: '{{ factory_group }}'
+    mode: '0750'
+  loop: "{{ ['main'] + hermes_profiles | map(attribute='role') | list }}"
+- name: Render factory AGENTS.md with the target user's factory path
+  ansible.builtin.template:
+    src: '{{ playbook_dir }}/../config/software-factory/AGENTS.md'
+    dest: '{{ factory_home }}/{{ factory_relative_path }}/AGENTS.md'
+    owner: '{{ factory_user }}'
+    group: '{{ factory_group }}'
+    mode: '0640'
+- name: Install canonical factory workflow
+  ansible.builtin.copy:
+    src: '{{ playbook_dir }}/../config/software-factory/WORKFLOW.md'
+    dest: '{{ factory_home }}/{{ factory_relative_path }}/WORKFLOW.md'
+    owner: '{{ factory_user }}'
+    group: '{{ factory_group }}'
+    mode: '0640'
+- name: Install role guidance
+  ansible.builtin.copy:
+    src: '{{ playbook_dir }}/../config/software-factory/agents/{{ item }}/SOUL.md'
+    dest: '{{ factory_home }}/{{ factory_relative_path }}/agents/{{ item }}/SOUL.md'
+    owner: '{{ factory_user }}'
+    group: '{{ factory_group }}'
+    mode: '0640'
+  loop: "{{ ['main'] + hermes_profiles | map(attribute='role') | list }}"
+
+- name: Read host Git signing preferences
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/git
+      - config
+      - --global
+      - --get
+      - '{{ item.key }}'
+  become: true
+  become_user: '{{ factory_user }}'
+  environment:
+    HOME: '{{ factory_home }}'
+  loop:
+    - { key: commit.gpgsign, value: 'true' }
+    - { key: gpg.format, value: gpg }
+  register: git_preferences
+  failed_when: false
+  changed_when: false
+  when: git_commit_signing | bool
+
+- name: Apply host Git signing preferences
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/git
+      - config
+      - --global
+      - '{{ item.item.key }}'
+      - '{{ item.item.value }}'
+  become: true
+  become_user: '{{ factory_user }}'
+  environment:
+    HOME: '{{ factory_home }}'
+  loop: '{{ git_preferences.results }}'
+  when: git_commit_signing | bool and item.stdout != item.item.value

@@ -1,0 +1,18 @@
+# Copy to ansible/local-vars.yml (gitignored) and uncomment only what you want to change.
+# Each top-level key replaces the default in ansible/vars.yml; lists are replaced, not merged.
+# Do not put secrets here. Credentials are configured through Hermes setup on the VPS.
+
+# factory_relative_path: software-factory
+# docker_group_access: true
+# git_commit_signing: false
+# hermes_commit: '5eb99eb2844b22ebb723711b8e6a0bbb80bb5f04'
+# hermes_branch: main
+# hermes_model: 'gpt-5.6-sol'
+# hermes_provider: openai-codex
+# hermes_base_url: 'https://chatgpt.com/backend-api/codex'
+# hermes_docker_image: 'hermes-qa-playwright:1.63.0'
+# hermes_profiles:
+#   - { name: hoe, role: head-of-engineering, gateway: true }
+#   - { name: techlead, role: tech-lead }
+#   - { name: engineer, role: engineer }
+#   - { name: qa, role: qa }

@@ -1,0 +1,12 @@
+model:
+  default: '{{ hermes_model }}'
+  provider: '{{ hermes_provider }}'
+  base_url: '{{ hermes_base_url }}'
+terminal:
+  backend: docker
+  cwd: /workspace
+  docker_image: '{{ hermes_docker_image }}'
+  docker_mount_cwd_to_workspace: false
+  docker_volumes:
+    - '{{ factory_home }}/{{ factory_relative_path }}:/workspace'
+  docker_forward_env: []

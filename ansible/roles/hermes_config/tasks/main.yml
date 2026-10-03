@@ -1,0 +1,97 @@
+---
+# Managed profiles: Hermes' built-in default profile plus each configured specialist in hermes_profiles.
+- name: Start the managed profile list with the default profile
+  ansible.builtin.set_fact:
+    managed_profiles:
+      - name: default
+        role: main
+        template: default.yml.j2
+        dir: '{{ factory_home }}/.hermes'
+        gateway: hermes-gateway.service
+
+- name: Add configured specialist profiles
+  ansible.builtin.set_fact:
+    managed_profiles: >-
+      {{ managed_profiles + [{
+           'name': item.name,
+           'role': item.role,
+           'template': 'specialist.yml.j2',
+           'dir': factory_home + '/.hermes/profiles/' + item.name,
+           'gateway': ('hermes-gateway-' + item.name + '.service') if item.gateway | default(false) else ''}] }}
+  loop: '{{ hermes_profiles }}'
+
+- name: Ensure named Hermes agent profiles exist
+  ansible.builtin.command:
+    argv:
+      - '{{ hermes_cli_path }}'
+      - profile
+      - create
+      - '{{ item.name }}'
+  args:
+    creates: '{{ factory_home }}/.hermes/profiles/{{ item.name }}/config.yaml'
+  become: true
+  become_user: '{{ factory_user }}'
+  environment:
+    HOME: '{{ factory_home }}'
+    PATH: '{{ factory_home }}/.local/bin:/usr/local/bin:/usr/bin:/bin'
+  loop: '{{ hermes_profiles }}'
+
+- name: Merge managed settings into Hermes profile config
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/python3
+      - '{{ playbook_dir }}/../scripts/merge_hermes_config.py'
+      - --target
+      - '{{ item.dir }}/config.yaml'
+      - --fragment
+      - '-'
+    # Rendered in memory and piped in, so no settings fragment is written to disk.
+    stdin: "{{ lookup('ansible.builtin.template', playbook_dir + '/../config/hermes/' + item.template) }}"
+  become: true
+  become_user: '{{ factory_user }}'
+  loop: '{{ managed_profiles }}'
+  register: hermes_merge_results
+  changed_when: "'CHANGED' in hermes_merge_results.stdout"
+
+- name: Install role SOUL files into the corresponding profiles
+  ansible.builtin.copy:
+    src: '{{ playbook_dir }}/../config/software-factory/agents/{{ item.role }}/SOUL.md'
+    dest: '{{ item.dir }}/SOUL.md'
+    owner: '{{ factory_user }}'
+    group: '{{ factory_group }}'
+    mode: '0640'
+  loop: '{{ managed_profiles }}'
+  register: hermes_soul_results
+
+- name: Check which Hermes gateways are active after profile changes
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/systemctl
+      - --user
+      - is-active
+      - '{{ item.gateway }}'
+  become: true
+  become_user: '{{ factory_user }}'
+  environment:
+    XDG_RUNTIME_DIR: '/run/user/{{ ansible_facts.getent_passwd[factory_user][1] }}'
+    DBUS_SESSION_BUS_ADDRESS: 'unix:path=/run/user/{{ ansible_facts.getent_passwd[factory_user][1] }}/bus'
+  loop: "{{ managed_profiles | selectattr('gateway') | list }}"
+  register: hermes_gateway_states
+  failed_when: false
+  changed_when: false
+  when: hermes_merge_results.changed or hermes_soul_results.changed
+
+- name: Restart Hermes gateways that were active before profile changes
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/systemctl
+      - --user
+      - restart
+      - '{{ item.item.gateway }}'
+  become: true
+  become_user: '{{ factory_user }}'
+  environment:
+    XDG_RUNTIME_DIR: '/run/user/{{ ansible_facts.getent_passwd[factory_user][1] }}'
+    DBUS_SESSION_BUS_ADDRESS: 'unix:path=/run/user/{{ ansible_facts.getent_passwd[factory_user][1] }}/bus'
+  loop: '{{ hermes_gateway_states.results | default([]) }}'
+  when: item.rc is defined and item.rc == 0

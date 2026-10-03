@@ -1,0 +1,36 @@
+# Review these choices before running on a fresh server.
+factory_relative_path: software-factory
+legacy_factory_relative_path: projects/software-factory
+docker_group_access: true
+# Require GPG-signed commits for the target user (git commit.gpgsign). Needs a GPG key on the host.
+git_commit_signing: false
+hermes_version: '0.21.2'
+hermes_commit: '5eb99eb2844b22ebb723711b8e6a0bbb80bb5f04'
+hermes_branch: main
+hermes_model: 'gpt-5.6-sol'
+hermes_provider: openai-codex
+hermes_base_url: 'https://chatgpt.com/backend-api/codex'
+hermes_docker_image: 'hermes-qa-playwright:1.63.0'
+# The Hermes default profile always uses config/software-factory/agents/main/SOUL.md.
+# Each specialist profile below gets a Docker terminal and the SOUL.md from
+# config/software-factory/agents/<role>/. Set gateway: true for profiles you message directly;
+# their hermes-gateway-<name>.service is restarted after config changes if it is running.
+# The default profile always has a gateway (hermes-gateway.service).
+hermes_profiles:
+  - { name: hoe, role: head-of-engineering, gateway: true }
+  - { name: techlead, role: tech-lead }
+  - { name: engineer, role: engineer }
+  - { name: qa, role: qa }
+base_packages:
+  - ca-certificates
+  - curl
+  - git
+  - gnupg
+  - jq
+  - python3
+  - python3-apt
+  - python3-yaml
+  - ripgrep
+  - tmux
+  - unzip
+  - zip

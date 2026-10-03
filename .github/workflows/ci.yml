@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: ShellCheck
+        run: shellcheck -S warning bootstrap.sh scripts/*.sh
+      - name: Python compiles
+        run: python3 -m py_compile scripts/*.py
+      - name: Install Ansible tooling
+        run: pipx install ansible-core && pipx install ansible-lint
+      - name: Playbook syntax
+        run: ansible-playbook --syntax-check -i ansible/inventory/localhost.yml ansible/playbook.yml
+      - name: ansible-lint
+        run: ansible-lint --profile min ansible/playbook.yml
+
+  # Runs the real setup on a GitHub Ubuntu 24.04 runner as a stand-in for a fresh VPS.
+  # Hermes itself is not installed: it needs interactive sign-in, so verify reports it as pending.
+  e2e:
+    runs-on: ubuntu-24.04
+    needs: lint
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove the runner's preinstalled Docker so the playbook installs Ubuntu's packages
+        run: |
+          pkgs=$(dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 'docker*' 'containerd*' 'moby*' 2>/dev/null \
+            | awk '$1 == "ii" { print $2 }')
+          if [[ -n $pkgs ]]; then sudo apt-get purge -y $pkgs; fi
+      - name: make install
+        run: make install
+      - name: make configure is idempotent
+        run: |
+          ./scripts/configure.sh | tee configure.log
+          grep -Eq 'changed=0 +unreachable=0 +failed=0' configure.log
+      - name: make image-qa
+        run: sg docker -c 'make image-qa'
+      - name: make verify
+        run: sg docker -c 'make verify'

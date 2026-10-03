@@ -1,0 +1,43 @@
+---
+- name: Configure a personal Ubuntu 24.04 VPS
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+  vars_files:
+    - vars.yml
+  pre_tasks:
+    - name: Check supported OS
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.distribution == 'Ubuntu'
+          - ansible_facts.distribution_version == '24.04'
+          - factory_user is defined
+          - factory_user != 'root'
+        fail_msg: 'Run on Ubuntu 24.04 and supply an existing non-root factory_user.'
+    - name: Resolve existing user home
+      ansible.builtin.getent:
+        database: passwd
+        key: '{{ factory_user }}'
+    - name: Set workspace path
+      ansible.builtin.set_fact:
+        factory_home: '{{ ansible_facts.getent_passwd[factory_user][4] }}'
+        factory_group: '{{ ansible_facts.getent_passwd[factory_user][2] }}'
+        hermes_cli_path: '{{ ansible_facts.getent_passwd[factory_user][4] }}/.local/bin/hermes'
+    - name: Check whether Hermes is installed for the target user
+      ansible.builtin.stat:
+        path: '{{ factory_home }}/.local/bin/hermes'
+      register: hermes_cli
+  roles:
+    - base
+    - docker
+    - workspace
+  tasks:
+    - name: Configure Hermes profiles when the CLI is installed
+      ansible.builtin.include_role:
+        name: hermes_config
+      when: hermes_cli.stat.exists
+    - name: Report that Hermes configuration is waiting for installation
+      ansible.builtin.debug:
+        msg: 'Hermes is not installed for {{ factory_user }}. Run make hermes-install, complete Hermes sign-in/setup, then run make configure.'
+      when: not hermes_cli.stat.exists

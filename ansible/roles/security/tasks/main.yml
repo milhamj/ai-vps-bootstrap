@@ -35,6 +35,17 @@
     state: present
   when: ssh_hardening | bool
 
+# sshd -t and sshd -T need this runtime directory. ssh.service creates it on start, but with
+# Ubuntu 24.04's socket activation it is missing until the first connection after boot.
+- name: Ensure the sshd privilege separation directory exists
+  ansible.builtin.file:
+    path: /run/sshd
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: ssh_hardening | bool
+
 - name: Install SSH hardening settings
   ansible.builtin.template:
     src: sshd-hardening.conf.j2

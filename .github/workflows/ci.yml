@@ -19,7 +19,9 @@ jobs:
       - name: Python compiles
         run: python3 -m py_compile scripts/*.py
       - name: Install Ansible tooling
-        run: pipx install ansible-core && pipx install ansible-lint
+        run: |
+          pipx install ansible-core && pipx install ansible-lint
+          ansible-galaxy collection install community.general
       - name: Playbook syntax
         run: ansible-playbook --syntax-check -i ansible/inventory/localhost.yml ansible/playbook.yml
       - name: ansible-lint
@@ -38,8 +40,24 @@ jobs:
           pkgs=$(dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 'docker*' 'containerd*' 'moby*' 2>/dev/null \
             | awk '$1 == "ii" { print $2 }')
           if [[ -n $pkgs ]]; then sudo apt-get purge -y $pkgs; fi
+      - name: Give the runner user an SSH key, as on a real VPS
+        run: |
+          install -d -m 700 ~/.ssh
+          ssh-keygen -q -t ed25519 -N '' -f ~/.ssh/ci_key
+          cat ~/.ssh/ci_key.pub >> ~/.ssh/authorized_keys
+          chmod 600 ~/.ssh/authorized_keys
       - name: make install
         run: make install
+      - name: Key login still works and password login is refused after hardening
+        run: |
+          sudo systemctl start ssh
+          ssh -i ~/.ssh/ci_key -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$USER@localhost" true
+          if ssh -o BatchMode=yes -o PubkeyAuthentication=no -o StrictHostKeyChecking=accept-new \
+              "$USER@localhost" true 2> password.log; then
+            echo 'Password-only login unexpectedly succeeded' >&2; exit 1
+          fi
+          grep -q 'Permission denied (publickey)' password.log
+          sudo ufw status verbose
       - name: make configure is idempotent
         run: |
           ./scripts/configure.sh | tee configure.log

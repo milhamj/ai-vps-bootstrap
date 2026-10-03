@@ -1,10 +1,32 @@
 # VPS bootstrap (Ubuntu 24.04)
 
-A reproducible bootstrap for running a [Hermes Agent](https://github.com/NousResearch/hermes-agent) "software factory" on an Ubuntu 24.04 VPS. It installs baseline tools and Docker, creates `/home/<user>/software-factory`, installs a pinned Hermes revision on request, and configures a default Hermes profile plus specialist agent profiles (Head of Engineering, Tech Lead, Engineer, QA) that work through Docker-sandboxed terminals.
+A reproducible bootstrap for running a [Hermes Agent](https://github.com/NousResearch/hermes-agent) "software factory" on an Ubuntu 24.04 VPS. It installs baseline tools and Docker, creates `/home/<user>/software-factory`, installs a pinned Hermes revision on request, and configures a default Hermes profile plus specialist agent profiles (Head of Engineering, Tech Lead, Engineer, QA) that work through Docker-sandboxed terminals. It also hardens the server: key-only SSH, a UFW firewall, and Fail2ban.
+
+## How it works
+
+You talk to the Head of Engineering (`hoe`) over Telegram. It turns your request into a requirement and a high-level design, asks for your approval, then hands the work through Hermes Kanban to the specialist profiles. A second approval gate comes before anything is merged. The main Hermes profile is also reachable over Telegram for general tasks on the host.
+
+```mermaid
+flowchart TD
+    you([You, on Telegram]) --> hoe[Head of Engineering<br/>hoe]
+    hoe --> req[Requirement + high-level design<br/>docs/requirements, docs/architecture]
+    req --> gate1{{Approval gate 1:<br/>you approve the requirement}}
+    gate1 --> kanban[(Hermes Kanban)]
+    kanban --> tl[Tech Lead<br/>implementation plan<br/>docs/implementation]
+    tl --> eng[Engineer<br/>implementation + tests]
+    eng --> review[Tech Lead review]
+    review -- changes required --> eng
+    review --> qa[QA<br/>verifies against the requirement<br/>docs/qa]
+    qa -- fail --> eng
+    qa --> gate2{{Approval gate 2:<br/>you approve the result}}
+    gate2 --> merge([Ready to merge])
+```
+
+The specialists run their commands in Docker containers that can only see the factory folder. Project state lives in durable artifacts (Markdown docs, Kanban tasks, Git history, QA reports) rather than in chat history, so work survives restarts and agent failures. The full lifecycle and handoff rules are in `config/software-factory/WORKFLOW.md`.
 
 ## Prerequisites
 
-- A fresh Ubuntu 24.04 VPS with a non-root sudo user and working SSH access.
+- A fresh Ubuntu 24.04 VPS with a non-root sudo user who can log in with an SSH key. If your provider only gives you `root`, run `scripts/create-admin-user.sh <user>` as root first (see below).
 - Back up any existing data before applying to a machine that is not fresh.
 - Review `ansible/vars.yml`, especially `docker_group_access`. Membership in the Docker group grants broad control of the host.
 - The default model settings use the `openai-codex` provider, which signs in with a ChatGPT account. Override `hermes_model`, `hermes_provider`, and `hermes_base_url` to use a different provider.
@@ -15,14 +37,32 @@ Defaults live in `ansible/vars.yml`. To override them without editing tracked fi
 
 Notable settings:
 
+- `ssh_hardening` (default `true`): disables SSH root login and password login. Before changing anything, it checks that the target user (and the user running the playbook) has a public key in `~/.ssh/authorized_keys`, and stops with an error if not. It then confirms the effective sshd settings with `sshd -T`.
+- `firewall_enabled` (default `true`) and `ssh_port` (default `22`): UFW denies incoming traffic except SSH on `ssh_port` and allows outgoing traffic. `ssh_port` only opens the firewall; it does not change the port sshd listens on. Setting `firewall_enabled: false` leaves UFW as it is rather than disabling it.
+- `fail2ban_enabled` (default `true`): Fail2ban with an sshd jail that reads the systemd journal.
 - `git_commit_signing` (default `false`): set to `true` to require GPG-signed commits for the target user. You must restore or generate a GPG key yourself.
-- `hermes_profiles`: the specialist profiles. Each entry has a `name` (the Hermes profile and CLI alias), a `role` (the folder under `config/software-factory/agents/` holding its `SOUL.md`), and an optional `gateway: true` for profiles you message directly. By default only the main profile and `hoe` have gateways; the other specialists are reached through the factory workflow. To add a profile, add an entry and a matching `SOUL.md`; profile creation, settings, role prompts, gateway restarts, and verification all follow the list.
+- `hermes_toolsets`: the Hermes tools enabled for each profile's `cli` and `telegram` platforms. `main` (default and `hoe`) adds delegation, connections, vision, cronjob, and image_gen; `specialist` (the Kanban workers) leaves those out. A profile picks one with `toolsets:` in `hermes_profiles`.
+- Every profile also gets `proxy.enabled: false` (iron-proxy egress needs static API keys, which the OAuth-based `openai-codex` provider does not have), `compression.threshold: 0.5`, and the local headless browser. These live in `config/hermes/common.yml.j2`.
+- `hermes_profiles`: the specialist profiles. Each entry has a `name` (the Hermes profile and CLI alias), a `role` (the folder under `config/software-factory/agents/` holding its `SOUL.md`), an optional `gateway: true` for profiles you message directly, and an optional `toolsets` (`main` or `specialist`, default `specialist`). By default only the main profile and `hoe` have gateways; the other specialists are reached through the factory workflow. To add a profile, add an entry and a matching `SOUL.md`; profile creation, settings, role prompts, gateway restarts, and verification all follow the list.
 
 The target user is not a setting: it is the user running the commands, or `VPS_USER=<user>` when a different sudo account applies the playbook. Credentials never go in these files; configure them through Hermes setup on the VPS.
 
 ## First setup
 
-Run these as the normal sudo user:
+### Root-only VPS: create an admin user first
+
+If you can only log in as `root`, run this as root once:
+
+```bash
+git clone <this repository> && cd <repository folder>
+./scripts/create-admin-user.sh <user>
+```
+
+It creates `<user>` with a password (used for `sudo`), adds it to the `sudo` group, and copies root's `~/.ssh/authorized_keys` to it. Keep the root session open, then from your own machine confirm `ssh <user>@<server>` works with your key and that `sudo whoami` prints `root`. Continue below as `<user>`, in a clone of this repository in that user's home.
+
+### Install
+
+Run these as the normal sudo user. `make install` disables root and password SSH login, so keep your current SSH session open and confirm a new key-based login works afterwards:
 
 ```bash
 make install
@@ -71,6 +111,12 @@ The factory root is `/home/<user>/software-factory`. If only an older-layout dir
 The default Hermes profile uses the `local` terminal backend and runs as the configured Unix user. Specialist profiles use the `docker` terminal backend, start in `/workspace`, and receive only the read-write mount `/home/<user>/software-factory:/workspace`. Automatic CWD mounting is disabled and no host environment variables are forwarded.
 
 The container volume list scopes the specialist terminal environment. The gateway process itself runs as the configured Unix user. Each Hermes profile has separate configuration and session state.
+
+## Security notes
+
+- Docker writes its own iptables rules, so a port published with `docker run -p` or Compose `ports:` is reachable from the internet even though UFW denies incoming traffic. This setup publishes no ports. If you add services, bind them to `127.0.0.1` or put them behind a reverse proxy.
+- Specialist containers get only the factory mount. Do not add `~/.hermes`, `/var/run/docker.sock`, or the whole home directory to `docker_volumes`; `make verify` fails if the mount list changes.
+- Membership in the `docker` group is equivalent to root on the host (see `docker_group_access`).
 
 ## Machine-specific dependencies
 

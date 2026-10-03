@@ -29,6 +29,7 @@
         path: '{{ factory_home }}/.local/bin/hermes'
       register: hermes_cli
   roles:
+    - security
     - base
     - docker
     - workspace

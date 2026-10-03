@@ -1,0 +1,123 @@
+---
+# SSH hardening. The lockout check runs before anything changes: every account that will log in
+# afterwards must already have a public key, because password login is about to be disabled.
+- name: Check that SSH users have a public key before disabling password login
+  ansible.builtin.shell: |
+    set -u
+    missing=''
+    for user in {{ ssh_key_users | map('quote') | join(' ') }}; do
+      home=$(getent passwd "$user" | cut -d: -f6)
+      if ! grep -Evs '^[[:space:]]*#' "$home/.ssh/authorized_keys" \
+          | grep -Eq '(^|[[:space:]])(ssh-|ecdsa-|sk-)[A-Za-z0-9@.-]+[[:space:]]+AAAA'; then
+        missing="$missing $user"
+      fi
+    done
+    echo "$missing"
+  vars:
+    ssh_key_users: "{{ [factory_user, lookup('ansible.builtin.env', 'USER')] | select | reject('equalto', 'root') | unique | list }}"
+  register: ssh_users_without_keys
+  changed_when: false
+  when: ssh_hardening | bool
+
+- name: Refuse to disable password login without SSH keys
+  ansible.builtin.assert:
+    that: ssh_users_without_keys.stdout | trim == ''
+    fail_msg: >-
+      No public key in ~/.ssh/authorized_keys for:{{ ssh_users_without_keys.stdout }}.
+      Disabling password login now would lock these users out. Add a key (ssh-copy-id from your
+      machine, or scripts/create-admin-user.sh as root), confirm key login works, then rerun.
+      To skip SSH hardening instead, set ssh_hardening: false in ansible/local-vars.yml.
+  when: ssh_hardening | bool
+
+- name: Ensure the SSH server is installed
+  ansible.builtin.apt:
+    name: openssh-server
+    state: present
+  when: ssh_hardening | bool
+
+- name: Install SSH hardening settings
+  ansible.builtin.template:
+    src: sshd-hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/00-ai-vps-hardening.conf
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Reload ssh
+  when: ssh_hardening | bool
+
+- name: Apply SSH changes now
+  ansible.builtin.meta: flush_handlers
+
+- name: Read the effective sshd configuration
+  ansible.builtin.command:
+    argv: [/usr/sbin/sshd, -T]
+  register: sshd_effective
+  changed_when: false
+  when: ssh_hardening | bool
+
+- name: Confirm root and password login are disabled
+  ansible.builtin.assert:
+    that:
+      - "'permitrootlogin no' in sshd_effective.stdout_lines"
+      - "'passwordauthentication no' in sshd_effective.stdout_lines"
+      - "'kbdinteractiveauthentication no' in sshd_effective.stdout_lines"
+    fail_msg: >-
+      sshd still allows root or password login. Another file in /etc/ssh/sshd_config.d/ or
+      /etc/ssh/sshd_config may set these first; check with sudo sshd -T.
+  when: ssh_hardening | bool
+
+# Firewall. SSH is allowed before UFW is enabled so the current session is not cut off.
+- name: Install UFW
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+  when: firewall_enabled | bool
+
+- name: Allow SSH through the firewall
+  community.general.ufw:
+    rule: allow
+    port: '{{ ssh_port | string }}'
+    proto: tcp
+    comment: SSH
+  when: firewall_enabled | bool
+
+- name: Deny incoming and allow outgoing traffic by default
+  community.general.ufw:
+    default: '{{ item.policy }}'
+    direction: '{{ item.direction }}'
+  loop:
+    - { direction: incoming, policy: deny }
+    - { direction: outgoing, policy: allow }
+  when: firewall_enabled | bool
+
+- name: Enable the firewall
+  community.general.ufw:
+    state: enabled
+  when: firewall_enabled | bool
+
+# Fail2ban. The systemd backend reads sshd's journal, so it works without /var/log/auth.log.
+- name: Install Fail2ban
+  ansible.builtin.apt:
+    name:
+      - fail2ban
+      - python3-systemd
+    state: present
+  when: fail2ban_enabled | bool
+
+- name: Configure the Fail2ban sshd jail
+  ansible.builtin.template:
+    src: fail2ban-sshd.local.j2
+    dest: /etc/fail2ban/jail.d/ai-vps-sshd.local
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart fail2ban
+  when: fail2ban_enabled | bool
+
+- name: Start Fail2ban
+  ansible.builtin.service:
+    name: fail2ban
+    enabled: true
+    state: started
+  when: fail2ban_enabled | bool

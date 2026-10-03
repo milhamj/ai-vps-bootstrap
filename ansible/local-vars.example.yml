@@ -4,6 +4,10 @@
 
 # factory_relative_path: software-factory
 # docker_group_access: true
+# ssh_hardening: true
+# ssh_port: 22
+# firewall_enabled: true
+# fail2ban_enabled: true
 # git_commit_signing: false
 # hermes_commit: '5eb99eb2844b22ebb723711b8e6a0bbb80bb5f04'
 # hermes_branch: main
@@ -11,8 +15,11 @@
 # hermes_provider: openai-codex
 # hermes_base_url: 'https://chatgpt.com/backend-api/codex'
 # hermes_docker_image: 'hermes-qa-playwright:1.63.0'
+# hermes_toolsets:
+#   main: [web, browser, terminal, file, code_execution, skills, todo, kanban, memory, session_search, clarify, delegation, vision, connections, cronjob, image_gen]
+#   specialist: [terminal, file, code_execution, web, browser, skills, todo, kanban, memory, session_search, clarify]
 # hermes_profiles:
-#   - { name: hoe, role: head-of-engineering, gateway: true }
+#   - { name: hoe, role: head-of-engineering, gateway: true, toolsets: main }
 #   - { name: techlead, role: tech-lead }
 #   - { name: engineer, role: engineer }
 #   - { name: qa, role: qa }

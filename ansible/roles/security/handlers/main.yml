@@ -1,0 +1,12 @@
+---
+# try-reload-or-restart leaves a stopped (socket-activated) ssh alone; it reads the new config on next start.
+# Existing SSH sessions survive a reload.
+- name: Reload ssh
+  ansible.builtin.command:
+    argv: [/usr/bin/systemctl, try-reload-or-restart, ssh.service]
+  changed_when: true
+
+- name: Restart fail2ban
+  ansible.builtin.service:
+    name: fail2ban
+    state: restarted

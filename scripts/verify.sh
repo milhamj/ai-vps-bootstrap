@@ -11,18 +11,31 @@ docker compose version >/dev/null || { echo 'FAIL: Docker Compose v2 missing'; e
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 setting() { python3 "$repo_dir/scripts/effective_vars.py" "$1"; }
+is_true() { [[ ${1,,} =~ ^(true|yes|on|1)$ ]]; }
 target_user=${VPS_USER:-$(id -un)}
 target_home=$(getent passwd "$target_user" | cut -d: -f6)
 factory_root="$target_home/$(setting factory_relative_path)"
 [[ -n $target_home && -d "$factory_root/projects" ]] || { echo 'FAIL: software factory missing'; exit 1; }
-signing=$(setting git_commit_signing)
-if [[ ${signing,,} =~ ^(true|yes|on|1)$ ]]; then
+if is_true "$(setting git_commit_signing)"; then
   git_signing=$(HOME="$target_home" git config --global --get commit.gpgsign || true)
   git_format=$(HOME="$target_home" git config --global --get gpg.format || true)
   [[ $git_signing == true && $git_format == gpg ]] || {
     echo 'FAIL: git_commit_signing is enabled but host Git signing preferences are missing' >&2
     exit 1
   }
+fi
+
+if is_true "$(setting ssh_hardening)"; then
+  [[ -f /etc/ssh/sshd_config.d/00-ai-vps-hardening.conf ]] || {
+    echo 'FAIL: ssh_hardening is enabled but the sshd hardening file is missing; run make configure' >&2
+    exit 1
+  }
+fi
+if is_true "$(setting firewall_enabled)"; then
+  grep -qx 'ENABLED=yes' /etc/ufw/ufw.conf 2>/dev/null || { echo 'FAIL: UFW firewall is not enabled' >&2; exit 1; }
+fi
+if is_true "$(setting fail2ban_enabled)"; then
+  systemctl is-active --quiet fail2ban || { echo 'FAIL: Fail2ban is not running' >&2; exit 1; }
 fi
 
 if ! docker info >/dev/null 2>&1; then

@@ -8,6 +8,7 @@
         template: default.yml.j2
         dir: '{{ factory_home }}/.hermes'
         gateway: hermes-gateway.service
+        toolsets: '{{ hermes_toolsets.main }}'
 
 - name: Add configured specialist profiles
   ansible.builtin.set_fact:
@@ -17,7 +18,8 @@
            'role': item.role,
            'template': 'specialist.yml.j2',
            'dir': factory_home + '/.hermes/profiles/' + item.name,
-           'gateway': ('hermes-gateway-' + item.name + '.service') if item.gateway | default(false) else ''}] }}
+           'gateway': ('hermes-gateway-' + item.name + '.service') if item.gateway | default(false) else '',
+           'toolsets': hermes_toolsets[item.toolsets | default('specialist')]}] }}
   loop: '{{ hermes_profiles }}'
 
 - name: Ensure named Hermes agent profiles exist

@@ -1,0 +1,16 @@
+model:
+  default: '{{ hermes_model }}'
+  provider: '{{ hermes_provider }}'
+  base_url: '{{ hermes_base_url }}'
+# iron-proxy egress needs static provider API keys; the OAuth-based openai-codex provider has none,
+# and leaving it enabled blocks Kanban tasks with "proxy.enabled is true but iron-proxy is not configured".
+proxy:
+  enabled: false
+compression:
+  threshold: 0.5
+browser:
+  cloud_provider: local
+# Lists replace the profile's existing lists for these platforms; other platforms are left as-is.
+platform_toolsets:
+  cli: {{ item.toolsets | to_json }}
+  telegram: {{ item.toolsets | to_json }}

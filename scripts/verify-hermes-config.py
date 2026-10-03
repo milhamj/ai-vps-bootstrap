@@ -28,6 +28,14 @@ def main() -> int:
     expected_model = (settings["hermes_model"], settings["hermes_provider"], settings["hermes_base_url"])
     docker_image_name = settings["hermes_docker_image"]
     specialist_profiles = tuple(profile["name"] for profile in settings["hermes_profiles"])
+    toolsets = settings["hermes_toolsets"]
+    expected_toolsets = {
+        "default": toolsets["main"],
+        **{
+            profile["name"]: toolsets[profile.get("toolsets", "specialist")]
+            for profile in settings["hermes_profiles"]
+        },
+    }
     hermes_home = home / ".hermes"
     configs = {
         "default": read_mapping(hermes_home / "config.yaml"),
@@ -43,6 +51,16 @@ def main() -> int:
             model.get("default"), model.get("provider"), model.get("base_url")
         ) != expected_model:
             errors.append(f"{name}: model/provider/base_url do not match the configured settings")
+        if (config.get("proxy") or {}).get("enabled") is not False:
+            errors.append(f"{name}: proxy.enabled must be false for the OAuth provider")
+        if (config.get("compression") or {}).get("threshold") != 0.5:
+            errors.append(f"{name}: compression.threshold must be 0.5")
+        if (config.get("browser") or {}).get("cloud_provider") != "local":
+            errors.append(f"{name}: browser.cloud_provider must be local")
+        platform_toolsets = config.get("platform_toolsets") or {}
+        for platform in ("cli", "telegram"):
+            if platform_toolsets.get(platform) != expected_toolsets[name]:
+                errors.append(f"{name}: platform_toolsets.{platform} does not match the configured tool set")
         terminal = config.get("terminal", {})
         if not isinstance(terminal, dict):
             errors.append(f"{name}: terminal settings are missing")

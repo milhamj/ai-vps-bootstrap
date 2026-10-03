@@ -1,0 +1,6 @@
+# Managed by ai-vps-bootstrap (ansible/roles/security). Named 00- because sshd keeps the first
+# value it reads, so this must load before files such as 50-cloud-init.conf.
+PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes

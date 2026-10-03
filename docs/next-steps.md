@@ -4,8 +4,9 @@ The default Hermes profile has host terminal access; the specialist profiles use
 
 ## First setup on a new VPS
 
+0. If the VPS only gives you `root`, run `scripts/create-admin-user.sh <user>` as root and confirm key-based SSH login and `sudo` as that user before continuing.
 1. Optionally copy `ansible/local-vars.example.yml` to `ansible/local-vars.yml` and set overrides (model provider, `git_commit_signing`, profiles).
-2. Run `make install` as the normal sudo user. If a different sudo account applies the base playbook, set `VPS_USER=<user>`, then switch to `<user>` for all Hermes commands and setup.
+2. Run `make install` as the normal sudo user. It disables root and password SSH login (after checking that your user has an SSH key), enables UFW with only SSH open, and starts Fail2ban. Keep your session open and confirm a new SSH login works. If a different sudo account applies the base playbook, set `VPS_USER=<user>`, then switch to `<user>` for all Hermes commands and setup.
 3. Reconnect after Docker group membership changes, then run `make image-qa` as the target user to build the specialist terminal image with that user's UID/GID.
 4. If Hermes is not installed, run `make hermes-install` to install the pinned `hermes_commit`. If a Hermes CLI is already installed, skip this step.
 5. Run `make configure` once to create and configure the default and specialist Hermes profiles.
@@ -13,7 +14,7 @@ The default Hermes profile has host terminal access; the specialist profiles use
 7. Run `make configure` again to apply managed profile settings after the interactive setup and restart any gateway services that were already active.
 8. Run `make verify`.
 9. Restore Git identity, GitHub credentials, repositories, and required backups. If `git_commit_signing` is enabled, also restore or generate the GPG private key and trust configuration for host commits. Signed commits from specialist Docker terminals need a separately designed key/agent arrangement; do not mount the host GPG material into the container by default.
-10. Verify provider sign-in, the gateway services, a positive factory read/write, and a negative test that a specialist profile cannot access paths outside the mounted workspace.
+10. Verify provider sign-in, `sudo ufw status verbose`, `sudo fail2ban-client status sshd`, the gateway services, a positive factory read/write, and a negative test that a specialist profile cannot access paths outside the mounted workspace.
 
 ## Still needed for a full rebuild
 

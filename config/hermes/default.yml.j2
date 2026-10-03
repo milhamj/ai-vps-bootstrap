@@ -1,7 +1,4 @@
-model:
-  default: '{{ hermes_model }}'
-  provider: '{{ hermes_provider }}'
-  base_url: '{{ hermes_base_url }}'
+{% include 'common.yml.j2' %}
 terminal:
   backend: local
   cwd: .

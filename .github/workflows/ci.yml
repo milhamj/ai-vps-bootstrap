@@ -21,7 +21,7 @@ jobs:
       - name: Install Ansible tooling
         run: |
           pipx install ansible-core && pipx install ansible-lint
-          ansible-galaxy collection install community.general
+          ansible-galaxy collection install -r requirements.yml
       - name: Playbook syntax
         run: ansible-playbook --syntax-check -i ansible/inventory/localhost.yml ansible/playbook.yml
       - name: ansible-lint

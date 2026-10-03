@@ -1,0 +1,5 @@
+---
+# Ansible collections used by the playbook. Ubuntu's ansible package (installed by make install)
+# already includes these; CI and ansible-lint install them from this file.
+collections:
+  - name: community.general

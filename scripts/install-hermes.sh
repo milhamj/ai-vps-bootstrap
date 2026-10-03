@@ -32,7 +32,9 @@ if ! /usr/bin/bash "$installer" --help 2>&1 | rg -q -- '--non-interactive'; then
   echo 'Pinned Hermes installer does not advertise --non-interactive; refusing unattended setup.' >&2
   exit 1
 fi
-/usr/bin/bash "$installer" --branch "$hermes_branch" --commit "$hermes_commit" --non-interactive
+# The installer runs `npx playwright install` without --yes; npm_config_yes answers npx's
+# "Ok to proceed?" prompt so the unattended install does not stop for input.
+npm_config_yes=true /usr/bin/bash "$installer" --branch "$hermes_branch" --commit "$hermes_commit" --non-interactive
 
 if [[ ! -x "${HOME}/.local/bin/hermes" ]]; then
   echo "Hermes installer finished without creating ${HOME}/.local/bin/hermes." >&2

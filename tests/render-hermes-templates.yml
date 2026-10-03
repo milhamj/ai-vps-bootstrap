@@ -1,0 +1,29 @@
+---
+# Renders the Hermes profile templates through Ansible's own template lookup (the same path
+# hermes_config uses) and checks the result parses as YAML with the expected settings.
+# Run: ansible-playbook tests/render-hermes-templates.yml
+- name: Render Hermes profile templates
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../ansible/vars.yml
+  vars:
+    factory_home: /home/ci-user
+  tasks:
+    - name: Check each rendered template
+      vars:
+        rendered: "{{ lookup('ansible.builtin.template', playbook_dir + '/../config/hermes/' + item.template) | from_yaml }}"
+      ansible.builtin.assert:
+        that:
+          - rendered.model.provider == hermes_provider
+          - rendered.proxy.enabled == false
+          - rendered.compression.threshold == 0.5
+          - rendered.browser.cloud_provider == 'local'
+          - rendered.platform_toolsets.cli == item.toolsets
+          - rendered.platform_toolsets.telegram == item.toolsets
+          - rendered.terminal.backend == item.backend
+        fail_msg: '{{ item.template }} did not render to the expected Hermes settings'
+      loop:
+        - { template: default.yml.j2, backend: local, toolsets: '{{ hermes_toolsets.main }}' }
+        - { template: specialist.yml.j2, backend: docker, toolsets: '{{ hermes_toolsets.specialist }}' }

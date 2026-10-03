@@ -1,4 +1,6 @@
 {% include 'common.yml.j2' %}
+
+# The blank line above survives Ansible's trim_blocks, which drops the newline after the include.
 terminal:
   backend: docker
   cwd: /workspace

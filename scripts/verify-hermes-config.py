@@ -25,7 +25,14 @@ def main() -> int:
     home = Path(sys.argv[1])
     factory_root = Path(sys.argv[2])
     settings = effective_vars.load()
-    expected_model = (settings["hermes_model"], settings["hermes_provider"], settings["hermes_base_url"])
+    models = settings["hermes_models"]
+    expected_models = {
+        "default": models[settings["hermes_main_model"]],
+        **{
+            profile["name"]: models[profile.get("model", settings["hermes_main_model"])]
+            for profile in settings["hermes_profiles"]
+        },
+    }
     docker_image_name = settings["hermes_docker_image"]
     specialist_profiles = tuple(profile["name"] for profile in settings["hermes_profiles"])
     toolsets = settings["hermes_toolsets"]
@@ -47,9 +54,10 @@ def main() -> int:
     errors: list[str] = []
     for name, config in configs.items():
         model = config.get("model", {})
-        if not isinstance(model, dict) or (
-            model.get("default"), model.get("provider"), model.get("base_url")
-        ) != expected_model:
+        expected_model = expected_models[name]
+        if not isinstance(model, dict) or any(
+            model.get(key) != expected_model[key] for key in ("default", "provider", "base_url")
+        ):
             errors.append(f"{name}: model/provider/base_url do not match the configured settings")
         if (config.get("proxy") or {}).get("enabled") is not False:
             errors.append(f"{name}: proxy.enabled must be false for the OAuth provider")

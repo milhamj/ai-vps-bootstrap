@@ -1,7 +1,7 @@
 model:
-  default: '{{ hermes_model }}'
-  provider: '{{ hermes_provider }}'
-  base_url: '{{ hermes_base_url }}'
+  default: '{{ item.model.default }}'
+  provider: '{{ item.model.provider }}'
+  base_url: '{{ item.model.base_url }}'
 # iron-proxy egress needs static provider API keys; the OAuth-based openai-codex provider has none,
 # and leaving it enabled blocks Kanban tasks with "proxy.enabled is true but iron-proxy is not configured".
 proxy:

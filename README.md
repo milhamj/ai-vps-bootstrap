@@ -29,7 +29,7 @@ The specialists run their commands in Docker containers that can only see the fa
 - A fresh Ubuntu 24.04 VPS with a non-root sudo user who can log in with an SSH key. If your provider only gives you `root`, run `scripts/create-admin-user.sh <user>` as root first (see below).
 - Back up any existing data before applying to a machine that is not fresh.
 - Review `ansible/vars.yml`, especially `docker_group_access`. Membership in the Docker group grants broad control of the host.
-- The default model settings use the `openai-codex` provider, which signs in with a ChatGPT account. Override `hermes_model`, `hermes_provider`, and `hermes_base_url` to use a different provider.
+- By default the main profile, `hoe`, and `techlead` use `gpt-5.6-sol` through the `openai-codex` provider (a ChatGPT subscription), and `engineer` and `qa` use `z-ai/glm-5.3-flash` through OpenRouter (an OpenRouter API key with credits). Change this with `hermes_models`, `hermes_main_model`, and each profile's `model`.
 
 ## Settings
 
@@ -42,9 +42,10 @@ Notable settings:
 - `firewall_enabled` (default `true`) and `ssh_port` (default `22`): UFW denies incoming traffic except SSH on `ssh_port` and allows outgoing traffic. `ssh_port` only opens the firewall; it does not change the port sshd listens on. Setting `firewall_enabled: false` leaves UFW as it is rather than disabling it.
 - `fail2ban_enabled` (default `true`): Fail2ban with an sshd jail that reads the systemd journal.
 - `git_commit_signing` (default `false`): set to `true` to require GPG-signed commits for the target user. You must restore or generate a GPG key yourself.
+- `hermes_models` and `hermes_main_model`: named model presets (`default` model, `provider`, `base_url`) and the one the main profile uses. Each entry in `hermes_profiles` picks a preset with `model:` (default: `hermes_main_model`). Credentials are per provider, not per profile: sign in to `openai-codex` with `hermes setup` and add an OpenRouter key once with `hermes auth add openrouter`; named profiles without their own credentials use the main profile's.
 - `hermes_toolsets`: the Hermes tools enabled for each profile's `cli` and `telegram` platforms. `main` (default and `hoe`) adds delegation, connections, vision, cronjob, and image_gen; `specialist` (the Kanban workers) leaves those out. A profile picks one with `toolsets:` in `hermes_profiles`.
 - Every profile also gets `proxy.enabled: false` (iron-proxy egress needs static API keys, which the OAuth-based `openai-codex` provider does not have), `compression.threshold: 0.5`, and the local headless browser. These live in `config/hermes/common.yml.j2`.
-- `hermes_profiles`: the specialist profiles. Each entry has a `name` (the Hermes profile and CLI alias), a `role` (the folder under `config/software-factory/agents/` holding its `SOUL.md`), an optional `gateway: true` for profiles you message directly, and an optional `toolsets` (`main` or `specialist`, default `specialist`). By default only the main profile and `hoe` have gateways; the other specialists are reached through the factory workflow. To add a profile, add an entry and a matching `SOUL.md`; profile creation, settings, role prompts, gateway restarts, and verification all follow the list.
+- `hermes_profiles`: the specialist profiles. Each entry has a `name` (the Hermes profile and CLI alias), a `role` (the folder under `config/software-factory/agents/` holding its `SOUL.md`), an optional `gateway: true` for profiles you message directly, an optional `toolsets` (`main` or `specialist`, default `specialist`), and an optional `model` (a key of `hermes_models`). By default only the main profile and `hoe` have gateways; the other specialists are reached through the factory workflow. To add a profile, add an entry and a matching `SOUL.md`; profile creation, settings, role prompts, gateway restarts, and verification all follow the list.
 
 The target user is not a setting: it is the user running the commands, or `VPS_USER=<user>` when a different sudo account applies the playbook. Credentials never go in these files; configure them through Hermes setup on the VPS.
 
@@ -74,6 +75,7 @@ If the playbook added the user to the Docker group, close the SSH session and re
 ```bash
 if [[ ! -x "$HOME/.local/bin/hermes" ]]; then make hermes-install; fi
 ~/.local/bin/hermes setup           # Full setup; sign in with OpenAI Codex (shared by all profiles)
+~/.local/bin/hermes auth add openrouter   # paste an OpenRouter API key (used by engineer and qa)
 make configure                      # 1st: create hoe/techlead/engineer/qa, apply managed settings
 ~/.local/bin/hermes gateway setup   # Telegram for the main profile
 ~/.local/bin/hoe gateway setup      # Telegram for hoe

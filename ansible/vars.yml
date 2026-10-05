@@ -19,9 +19,13 @@ git_commit_signing: false
 hermes_version: '0.21.2'
 hermes_commit: '5eb99eb2844b22ebb723711b8e6a0bbb80bb5f04'
 hermes_branch: main
-hermes_model: 'gpt-5.6-sol'
-hermes_provider: openai-codex
-hermes_base_url: 'https://chatgpt.com/backend-api/codex'
+# Model presets. Each profile picks one with model: in hermes_profiles; the main profile uses
+# hermes_main_model. codex signs in with a ChatGPT subscription (hermes setup); openrouter needs an
+# API key added once with: hermes auth add openrouter (named profiles fall back to it).
+hermes_models:
+  codex: { default: 'gpt-5.6-sol', provider: openai-codex, base_url: 'https://chatgpt.com/backend-api/codex' }
+  glm-flash: { default: 'z-ai/glm-5.3-flash', provider: openrouter, base_url: 'https://openrouter.ai/api/v1' }
+hermes_main_model: codex
 hermes_docker_image: 'hermes-qa-playwright:1.63.0'
 # Hermes tool sets, applied to each profile's cli and telegram platforms.
 # main: the profiles you talk to. specialist: Kanban workers, without delegation or connections.
@@ -32,13 +36,14 @@ hermes_toolsets:
 # Each specialist profile below gets a Docker terminal and the SOUL.md from
 # config/software-factory/agents/<role>/. Set gateway: true for profiles you message directly;
 # their hermes-gateway-<name>.service is restarted after config changes if it is running.
-# toolsets picks a key from hermes_toolsets (default: specialist).
+# toolsets picks a key from hermes_toolsets (default: specialist); model picks a key from
+# hermes_models (default: hermes_main_model).
 # The default profile always has a gateway (hermes-gateway.service).
 hermes_profiles:
-  - { name: hoe, role: head-of-engineering, gateway: true, toolsets: main }
-  - { name: techlead, role: tech-lead }
-  - { name: engineer, role: engineer }
-  - { name: qa, role: qa }
+  - { name: hoe, role: head-of-engineering, gateway: true, toolsets: main, model: codex }
+  - { name: techlead, role: tech-lead, model: codex }
+  - { name: engineer, role: engineer, model: glm-flash }
+  - { name: qa, role: qa, model: glm-flash }
 base_packages:
   - ca-certificates
   - curl

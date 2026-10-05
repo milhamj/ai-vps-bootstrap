@@ -16,7 +16,7 @@
         rendered: "{{ lookup('ansible.builtin.template', playbook_dir + '/../config/hermes/' + item.template) | from_yaml }}"
       ansible.builtin.assert:
         that:
-          - rendered.model.provider == hermes_provider
+          - rendered.model == item.model
           - rendered.proxy.enabled == false
           - rendered.compression.threshold == 0.5
           - rendered.browser.cloud_provider == 'local'
@@ -25,5 +25,11 @@
           - rendered.terminal.backend == item.backend
         fail_msg: '{{ item.template }} did not render to the expected Hermes settings'
       loop:
-        - { template: default.yml.j2, backend: local, toolsets: '{{ hermes_toolsets.main }}' }
-        - { template: specialist.yml.j2, backend: docker, toolsets: '{{ hermes_toolsets.specialist }}' }
+        - template: default.yml.j2
+          backend: local
+          toolsets: '{{ hermes_toolsets.main }}'
+          model: '{{ hermes_models[hermes_main_model] }}'
+        - template: specialist.yml.j2
+          backend: docker
+          toolsets: '{{ hermes_toolsets.specialist }}'
+          model: '{{ hermes_models["glm-flash"] }}'

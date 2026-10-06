@@ -27,6 +27,15 @@ hermes_models:
   glm-flash: { default: 'z-ai/glm-5.3-flash', provider: openrouter, base_url: 'https://openrouter.ai/api/v1' }
 hermes_main_model: codex
 hermes_docker_image: 'hermes-qa-playwright:1.63.0'
+# Git identity for commits made in the specialist Docker terminals (hoe, techlead, engineer, qa).
+# Baked into the terminal image as its system git config; run make image-qa after changing it.
+# Empty leaves the image without an identity, so agent commits fail until one is set.
+# Example: agent_git_name: my-agent-bot, agent_git_email: 'id+my-agent-bot@users.noreply.github.com'
+agent_git_name: ''
+agent_git_email: ''
+# Trailer lines every agent commit message must end with, added as a rule in the factory AGENTS.md.
+# Example: ['Co-Authored-By: Your Name <id+username@users.noreply.github.com>']
+agent_commit_trailers: []
 # Hermes tool sets, applied to each profile's cli and telegram platforms.
 # main: the profiles you talk to. specialist: Kanban workers, without delegation or connections.
 hermes_toolsets:

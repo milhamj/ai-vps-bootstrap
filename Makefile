@@ -16,6 +16,8 @@ image-qa:
 	image=$$(python3 scripts/effective_vars.py hermes_docker_image) && \
 	docker build --platform linux/amd64 -f docker/playwright-qa/Dockerfile \
 	  --build-arg "HERMES_UID=$$(id -u "$$user")" --build-arg "HERMES_GID=$$(id -g "$$user")" \
+	  --build-arg "AGENT_GIT_NAME=$$(python3 scripts/effective_vars.py agent_git_name)" \
+	  --build-arg "AGENT_GIT_EMAIL=$$(python3 scripts/effective_vars.py agent_git_email)" \
 	  -t "$$image" docker/playwright-qa
 update:
 	@printf 'Run git pull --ff-only, review the diff, then make configure.\n'

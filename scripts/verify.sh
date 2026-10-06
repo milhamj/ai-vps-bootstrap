@@ -55,6 +55,16 @@ docker run --rm --workdir /workspace --volume "$factory_root:/workspace" "$docke
   exit 1
 }
 
+for key in name email; do
+  expected=$(setting "agent_git_$key")
+  [[ -z $expected ]] && continue
+  actual=$(docker run --rm "$docker_image" git config --system --get "user.$key" 2>/dev/null || true)
+  [[ $actual == "$expected" ]] || {
+    echo "FAIL: terminal image git user.$key is '$actual', expected '$expected'; run make image-qa" >&2
+    exit 1
+  }
+done
+
 hermes_cli="$target_home/.local/bin/hermes"
 if [[ -x $hermes_cli ]]; then
   hermes_commit=$(git -C "$target_home/.hermes/hermes-agent" rev-parse HEAD)

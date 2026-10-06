@@ -12,6 +12,10 @@
 # git_commit_signing: false
 # hermes_commit: '5eb99eb2844b22ebb723711b8e6a0bbb80bb5f04'
 # hermes_branch: main
+# agent_git_name: 'my-agent-bot'
+# agent_git_email: 'id+my-agent-bot@users.noreply.github.com'
+# agent_commit_trailers:
+#   - 'Co-Authored-By: Your Name <id+username@users.noreply.github.com>'
 # hermes_models:
 #   codex: { default: 'gpt-5.6-sol', provider: openai-codex, base_url: 'https://chatgpt.com/backend-api/codex' }
 #   glm-flash: { default: 'z-ai/glm-5.3-flash', provider: openrouter, base_url: 'https://openrouter.ai/api/v1' }

@@ -21,5 +21,12 @@ RUN mkdir -p /home/hermes/.npm \
     && chmod -R u+rwX /home/hermes/.npm \
     && rm -rf /var/lib/apt/lists/*
 
+# Git identity for agent commits (agent_git_name / agent_git_email). Declared after the browser
+# layer so changing it does not re-download browsers. Left unset when empty.
+ARG AGENT_GIT_NAME=
+ARG AGENT_GIT_EMAIL=
+RUN if [ -n "$AGENT_GIT_NAME" ]; then git config --system user.name "$AGENT_GIT_NAME"; fi \
+    && if [ -n "$AGENT_GIT_EMAIL" ]; then git config --system user.email "$AGENT_GIT_EMAIL"; fi
+
 USER ${HERMES_UID}:${HERMES_GID}
 WORKDIR /workspace

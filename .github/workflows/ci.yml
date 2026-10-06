@@ -64,6 +64,10 @@ jobs:
         run: |
           ./scripts/configure.sh | tee configure.log
           grep -Eq 'changed=0 +unreachable=0 +failed=0' configure.log
+      - name: Set an agent git identity so the image build and verify exercise it
+        run: |
+          printf '%s\n' "agent_git_name: ci-agent" "agent_git_email: 'ci-agent@users.noreply.github.com'" \
+            > ansible/local-vars.yml
       - name: make image-qa
         run: sg docker -c 'make image-qa'
       - name: make verify

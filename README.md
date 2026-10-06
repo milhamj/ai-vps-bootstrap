@@ -43,6 +43,8 @@ Notable settings:
 - `fail2ban_enabled` (default `true`): Fail2ban with an sshd jail that reads the systemd journal.
 - `git_commit_signing` (default `false`): set to `true` to require GPG-signed commits for the target user. You must restore or generate a GPG key yourself.
 - `hermes_models` and `hermes_main_model`: named model presets (`default` model, `provider`, `base_url`) and the one the main profile uses. Each entry in `hermes_profiles` picks a preset with `model:` (default: `hermes_main_model`). Credentials are per provider, not per profile: sign in to `openai-codex` with `hermes setup` and add an OpenRouter key once with `hermes auth add openrouter`; named profiles without their own credentials use the main profile's.
+- `agent_git_name` and `agent_git_email` (default empty): the Git identity for commits the agents make in their Docker terminals (`hoe`, `techlead`, `engineer`, `qa`). It is built into the terminal image, so run `make image-qa` after changing it. While empty, agent commits fail with Git's "Please tell me who you are". The main profile runs on the host and uses your own Git config.
+- `agent_commit_trailers` (default empty): trailer lines, such as `Co-Authored-By: …`, that every agent commit message must end with. When set, the factory `AGENTS.md` gets a rule listing them. It is an instruction to the agents, not an enforced Git hook.
 - `hermes_toolsets`: the Hermes tools enabled for each profile's `cli` and `telegram` platforms. `main` (default and `hoe`) adds delegation, connections, vision, cronjob, and image_gen; `specialist` (the Kanban workers) leaves those out. A profile picks one with `toolsets:` in `hermes_profiles`.
 - Every profile also gets `proxy.enabled: false` (iron-proxy egress needs static API keys, which the OAuth-based `openai-codex` provider does not have), `compression.threshold: 0.5`, and the local headless browser. These live in `config/hermes/common.yml.j2`.
 - `hermes_profiles`: the specialist profiles. Each entry has a `name` (the Hermes profile and CLI alias), a `role` (the folder under `config/software-factory/agents/` holding its `SOUL.md`), an optional `gateway: true` for profiles you message directly, an optional `toolsets` (`main` or `specialist`, default `specialist`), and an optional `model` (a key of `hermes_models`). By default only the main profile and `hoe` have gateways; the other specialists are reached through the factory workflow. To add a profile, add an entry and a matching `SOUL.md`; profile creation, settings, role prompts, gateway restarts, and verification all follow the list.
@@ -61,6 +63,24 @@ git clone <this repository> && cd <repository folder>
 ```
 
 It creates `<user>` with a password (used for `sudo`), adds it to the `sudo` group, and copies root's `~/.ssh/authorized_keys` to it. Keep the root session open, then from your own machine confirm `ssh <user>@<server>` works with your key and that `sudo whoami` prints `root`. Continue below as `<user>`, in a clone of this repository in that user's home.
+
+### Configure your settings
+
+Before installing, create `ansible/local-vars.yml` (gitignored) with your agents' Git identity and any commit trailers. Use a GitHub account for the agent (or your own) and its noreply address from github.com/settings/emails:
+
+```bash
+cp ansible/local-vars.example.yml ansible/local-vars.yml
+nano ansible/local-vars.yml
+```
+
+```yaml
+agent_git_name: 'my-agent-bot'
+agent_git_email: '12345678+my-agent-bot@users.noreply.github.com'
+agent_commit_trailers:
+  - 'Co-Authored-By: Your Name <87654321+your-username@users.noreply.github.com>'
+```
+
+Add any other overrides from the Settings section, such as `ssh_password_login: true`. You can change these later: run `make configure` for trailers and Hermes settings, and `make image-qa` for the Git identity.
 
 ### Install
 

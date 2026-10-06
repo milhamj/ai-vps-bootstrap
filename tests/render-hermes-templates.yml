@@ -33,3 +33,17 @@
           backend: docker
           toolsets: '{{ hermes_toolsets.specialist }}'
           model: '{{ hermes_models["glm-flash"] }}'
+
+    - name: Check the commit-trailer rule in AGENTS.md appears only when trailers are set
+      vars:
+        agents_md: "{{ lookup('ansible.builtin.template', playbook_dir + '/../config/software-factory/AGENTS.md') }}"
+        trailer: 'Co-Authored-By: Example <1+example@users.noreply.github.com>'
+      ansible.builtin.assert:
+        that:
+          - "(trailer in agents_md) == (agent_commit_trailers | length > 0)"
+          - "'{%' not in agents_md"
+      loop:
+        - []
+        - ['Co-Authored-By: Example <1+example@users.noreply.github.com>']
+      loop_control:
+        loop_var: agent_commit_trailers

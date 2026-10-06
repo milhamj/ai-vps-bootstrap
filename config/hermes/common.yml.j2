@@ -2,6 +2,11 @@ model:
   default: '{{ item.model.default }}'
   provider: '{{ item.model.provider }}'
   base_url: '{{ item.model.base_url }}'
+{% if item.fallback %}
+fallback_model:
+  provider: '{{ item.fallback.provider }}'
+  model: '{{ item.fallback.default }}'
+{% endif %}
 # iron-proxy egress needs static provider API keys; the OAuth-based openai-codex provider has none,
 # and leaving it enabled blocks Kanban tasks with "proxy.enabled is true but iron-proxy is not configured".
 proxy:

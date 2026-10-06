@@ -22,6 +22,7 @@
 #   glm: { default: 'z-ai/glm-5.3', provider: openrouter, base_url: 'https://openrouter.ai/api/v1' }
 #   glm-flash: { default: 'z-ai/glm-5.3-flash', provider: openrouter, base_url: 'https://openrouter.ai/api/v1' }
 # hermes_main_model: codex
+# hermes_main_fallback: glm-flash
 # hermes_docker_image: 'hermes-qa-playwright:1.63.0'
 # hermes_toolsets:
 #   main: [web, browser, terminal, file, code_execution, skills, todo, kanban, memory, session_search, clarify, delegation, vision, connections, cronjob, image_gen]

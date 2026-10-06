@@ -27,6 +27,9 @@ hermes_models:
   glm: { default: 'z-ai/glm-5.3', provider: openrouter, base_url: 'https://openrouter.ai/api/v1' }
   glm-flash: { default: 'z-ai/glm-5.3-flash', provider: openrouter, base_url: 'https://openrouter.ai/api/v1' }
 hermes_main_model: codex
+# Preset the main profile switches to when its model fails (for example a subscription limit).
+# Empty disables it. Profiles in hermes_profiles can set their own with fallback:.
+hermes_main_fallback: glm-flash
 hermes_docker_image: 'hermes-qa-playwright:1.63.0'
 # Git identity for commits made in the specialist Docker terminals (hoe, techlead, engineer, qa).
 # Baked into the terminal image as its system git config; run make image-qa after changing it.
@@ -51,7 +54,8 @@ hermes_toolsets:
 # config/software-factory/agents/<role>/. Set gateway: true for profiles you message directly;
 # their hermes-gateway-<name>.service is restarted after config changes if it is running.
 # toolsets picks a key from hermes_toolsets (default: specialist); model picks a key from
-# hermes_models (default: hermes_main_model).
+# hermes_models (default: hermes_main_model); fallback optionally picks a preset to switch to
+# when that model fails.
 # The default profile always has a gateway (hermes-gateway.service).
 hermes_profiles:
   - { name: hoe, role: head-of-engineering, gateway: true, toolsets: main, model: glm-flash }

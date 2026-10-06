@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Set API keys for every Hermes profile whose model preset uses an API-key provider.
+# Set API keys for every Hermes profile whose model or fallback preset uses an API-key provider.
 # Each key is asked for once (hidden input, never in shell history) and set on each such profile
 # with `<profile> config set`. Usage: scripts/set-provider-keys.sh [--check]
 set -euo pipefail
@@ -17,10 +17,10 @@ import effective_vars
 KEY_VARS = {"openrouter": "OPENROUTER_API_KEY"}
 s = effective_vars.load()
 models, main = s["hermes_models"], s["hermes_main_model"]
-profiles = [("hermes", main)] + [(p["name"], p.get("model", main)) for p in s["hermes_profiles"]]
-for command, model in profiles:
-    var = KEY_VARS.get(models[model]["provider"])
-    if var:
+profiles = [("hermes", [main, s.get("hermes_main_fallback") or None])] + [
+    (p["name"], [p.get("model", main), p.get("fallback")]) for p in s["hermes_profiles"]]
+for command, presets in profiles:
+    for var in sorted({KEY_VARS.get(models[name]["provider"]) for name in presets if name} - {None}):
         print(command, var)
 EOF
 }

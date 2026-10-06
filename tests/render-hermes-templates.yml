@@ -17,6 +17,7 @@
       ansible.builtin.assert:
         that:
           - rendered.model == item.model
+          - "(rendered.fallback_model | default({})) == (dict(provider=item.fallback.provider, model=item.fallback.default) if item.fallback else {})"
           - rendered.proxy.enabled == false
           - rendered.compression.threshold == 0.5
           - rendered.browser.cloud_provider == 'local'
@@ -30,10 +31,12 @@
           backend: local
           toolsets: '{{ hermes_toolsets.main }}'
           model: '{{ hermes_models[hermes_main_model] }}'
+          fallback: '{{ hermes_models["glm-flash"] }}'
         - template: specialist.yml.j2
           backend: docker
           toolsets: '{{ hermes_toolsets.specialist }}'
           model: '{{ hermes_models["glm-flash"] }}'
+          fallback: {}
 
     - name: Check the commit conventions in AGENTS.md follow the identity and trailer settings
       vars:

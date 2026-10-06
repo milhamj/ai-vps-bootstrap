@@ -35,6 +35,14 @@ def main() -> int:
     }
     docker_image_name = settings["hermes_docker_image"]
     specialist_profiles = tuple(profile["name"] for profile in settings["hermes_profiles"])
+    main_fallback = settings.get("hermes_main_fallback") or None
+    expected_fallbacks = {
+        "default": models[main_fallback] if main_fallback else None,
+        **{
+            profile["name"]: models[profile["fallback"]] if profile.get("fallback") else None
+            for profile in settings["hermes_profiles"]
+        },
+    }
     toolsets = settings["hermes_toolsets"]
     expected_toolsets = {
         "default": toolsets["main"],
@@ -59,6 +67,13 @@ def main() -> int:
             model.get(key) != expected_model[key] for key in ("default", "provider", "base_url")
         ):
             errors.append(f"{name}: model/provider/base_url do not match the configured settings")
+        expected_fallback = expected_fallbacks[name]
+        if expected_fallback:
+            fallback = config.get("fallback_model") or {}
+            if (fallback.get("provider"), fallback.get("model")) != (
+                expected_fallback["provider"], expected_fallback["default"]
+            ):
+                errors.append(f"{name}: fallback_model does not match the configured fallback preset")
         if (config.get("proxy") or {}).get("enabled") is not False:
             errors.append(f"{name}: proxy.enabled must be false for the OAuth provider")
         if (config.get("compression") or {}).get("threshold") != 0.5:

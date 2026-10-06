@@ -10,6 +10,7 @@
         gateway: hermes-gateway.service
         toolsets: '{{ hermes_toolsets.main }}'
         model: '{{ hermes_models[hermes_main_model] }}'
+        fallback: "{{ hermes_models[hermes_main_fallback] if hermes_main_fallback | default('') else {} }}"
 
 - name: Add configured specialist profiles
   ansible.builtin.set_fact:
@@ -21,7 +22,8 @@
            'dir': factory_home + '/.hermes/profiles/' + item.name,
            'gateway': ('hermes-gateway-' + item.name + '.service') if item.gateway | default(false) else '',
            'toolsets': hermes_toolsets[item.toolsets | default('specialist')],
-           'model': hermes_models[item.model | default(hermes_main_model)]}] }}
+           'model': hermes_models[item.model | default(hermes_main_model)],
+           'fallback': hermes_models[item.fallback] if item.fallback | default('') else {}}] }}
   loop: '{{ hermes_profiles }}'
 
 - name: Ensure named Hermes agent profiles exist

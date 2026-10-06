@@ -6,7 +6,7 @@ The specialist Hermes profiles use the image named by `hermes_docker_image` (def
 make image-qa
 ```
 
-This builds `Dockerfile` with `HERMES_UID`/`HERMES_GID` set to the target user's IDs (the user running the command, or `VPS_USER`), so files the agents create in `/workspace` belong to that user and the container can write to the factory directory.
+This runs `scripts/build-image.sh`, which builds `Dockerfile` with `HERMES_UID`/`HERMES_GID` set to the target user's IDs (the user running the command, or `VPS_USER`), so files the agents create in `/workspace` belong to that user and the container can write to the factory directory.
 
 The image is intended for `linux/amd64` and uses `/workspace` as its working directory. The Hermes profile config mounts only `/home/<user>/software-factory` there. `make verify` also starts a disposable container to confirm that this image user can read and write the mounted factory; if it fails, rebuild with `make image-qa` as the target user.
 

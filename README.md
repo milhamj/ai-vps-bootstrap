@@ -123,7 +123,7 @@ On a fresh VPS without Hermes, `make hermes-install` pins the application source
 - `make install`: install OS prerequisites and apply the base playbook.
 - `make hermes-install`: install the pinned Hermes source revision when no Hermes CLI is present.
 - `make configure`: apply the workspace and managed Hermes configuration again.
-- `make image-qa`: build the Playwright terminal image used by the specialist profiles, owned by the target user's UID/GID.
+- `make image-qa`: build the Playwright terminal image used by the specialist profiles, owned by the target user's UID/GID. If the image changed, it then removes containers still running the previous build (asking first when run interactively), because Hermes otherwise keeps reusing them.
 - `make verify`: verify the host, workspace, Hermes settings, and required specialist Docker image.
 - `make update`: fetch nothing automatically; run `git pull --ff-only` yourself, review the diff, then `make configure`.
 

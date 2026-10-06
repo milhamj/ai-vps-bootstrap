@@ -78,6 +78,10 @@ if [[ -x $hermes_cli ]]; then
     exit 1
   }
   python3 "$repo_dir/scripts/verify-hermes-config.py" "$target_home" "$factory_root"
+  HOME="$target_home" "$repo_dir/scripts/set-provider-keys.sh" --check >/dev/null || {
+    echo 'FAIL: a profile that uses an API-key provider has no key; run make provider-keys' >&2
+    exit 1
+  }
 else
   echo 'NOTE: Hermes is not installed yet; profile configuration checks are pending.'
 fi

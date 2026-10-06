@@ -42,7 +42,7 @@ Notable settings:
 - `firewall_enabled` (default `true`) and `ssh_port` (default `22`): UFW denies incoming traffic except SSH on `ssh_port` and allows outgoing traffic. `ssh_port` only opens the firewall; it does not change the port sshd listens on. Setting `firewall_enabled: false` leaves UFW as it is rather than disabling it.
 - `fail2ban_enabled` (default `true`): Fail2ban with an sshd jail that reads the systemd journal.
 - `git_commit_signing` (default `false`): set to `true` to require GPG-signed commits for the target user. You must restore or generate a GPG key yourself.
-- `hermes_models` and `hermes_main_model`: named model presets (`default` model, `provider`, `base_url`) and the one the main profile uses. Each entry in `hermes_profiles` picks a preset with `model:` (default: `hermes_main_model`). Credentials are per provider, not per profile: sign in to `openai-codex` with `hermes setup` and add an OpenRouter key once with `hermes auth add openrouter`; named profiles without their own credentials use the main profile's.
+- `hermes_models` and `hermes_main_model`: named model presets (`default` model, `provider`, `base_url`) and the one the main profile uses. Each entry in `hermes_profiles` picks a preset with `model:` (default: `hermes_main_model`). Sign in to `openai-codex` with `hermes setup`. API keys for OpenRouter are set on each profile that uses it by `make provider-keys`, which asks for the key once (hidden) and runs `<profile> config set OPENROUTER_API_KEY` for each; `make verify` fails if one is missing. Run it again after adding a profile or changing a model preset.
 - `agent_git_name` and `agent_git_email` (default empty): the Git identity for commits the agents make in their Docker terminals (`hoe`, `techlead`, `engineer`, `qa`). It is built into the terminal image, so run `make image-qa` after changing it, and written into the factory `AGENTS.md` (Commit conventions) so every agent, including the main profile on the host, commits as it; run `make configure` after changing it. While empty, agent commits fail with Git's "Please tell me who you are". The main profile runs on the host and uses your own Git config.
 - `agent_forward_env` (default empty): names of variables passed from each specialist profile's `.env` into its Docker terminal, for example `[GH_TOKEN]`. See [GitHub access for agents](#github-access-for-agents).
 - `agent_commit_trailers` (default empty): trailer lines, such as `Co-Authored-By: …`, that every agent commit message must end with. When set, the Commit conventions section of the factory `AGENTS.md` lists them. It is an instruction to the agents, not an enforced Git hook.
@@ -97,8 +97,8 @@ If the playbook added the user to the Docker group, close the SSH session and re
 ```bash
 if [[ ! -x "$HOME/.local/bin/hermes" ]]; then make hermes-install; fi
 ~/.local/bin/hermes setup           # Full setup; sign in with OpenAI Codex (shared by all profiles)
-~/.local/bin/hermes auth add openrouter   # paste an OpenRouter API key (used by hoe, techlead, engineer, qa)
 make configure                      # 1st: create hoe/techlead/engineer/qa, apply managed settings
+make provider-keys                  # OpenRouter key, asked once and set on every profile that uses it
 ~/.local/bin/hermes gateway setup   # Telegram for the main profile
 ~/.local/bin/hoe gateway setup      # Telegram for hoe
 ~/.local/bin/hermes gateway install
@@ -108,7 +108,7 @@ make image-qa
 make verify
 ```
 
-Only the main profile needs `hermes setup`. Named profiles without their own sign-in use the main profile's (`~/.hermes/auth.json`) for that provider, and `make configure` sets everything else for them: model, tools, terminal, and role prompt. Run `<profile> setup` only to give a profile a different account or provider. Gateways are set up only for the profiles you message (the main profile and those with `gateway: true`).
+Only the main profile needs `hermes setup`. Named profiles without their own ChatGPT sign-in use the main profile's (`~/.hermes/auth.json`), OpenRouter profiles get their key from `make provider-keys`, and `make configure` sets everything else for them: model, tools, terminal, and role prompt. Run `<profile> setup` only to give a profile a different account or provider. Gateways are set up only for the profiles you message (the main profile and those with `gateway: true`).
 
 Run `make image-qa` as the target user (or with `VPS_USER=<user>`) so the image runs with that user's UID/GID.
 
@@ -123,6 +123,7 @@ On a fresh VPS without Hermes, `make hermes-install` pins the application source
 - `make install`: install OS prerequisites and apply the base playbook.
 - `make hermes-install`: install the pinned Hermes source revision when no Hermes CLI is present.
 - `make configure`: apply the workspace and managed Hermes configuration again.
+- `make provider-keys`: set API keys (OpenRouter) on every profile whose model needs one. `scripts/set-provider-keys.sh --check` shows which are set without printing them.
 - `make image-qa`: build the Playwright terminal image used by the specialist profiles, owned by the target user's UID/GID. If the image changed, it then removes containers still running the previous build (asking first when run interactively), because Hermes otherwise keeps reusing them.
 - `make verify`: verify the host, workspace, Hermes settings, and required specialist Docker image.
 - `make update`: fetch nothing automatically; run `git pull --ff-only` yourself, review the diff, then `make configure`.

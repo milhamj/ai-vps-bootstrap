@@ -35,17 +35,24 @@
           toolsets: '{{ hermes_toolsets.specialist }}'
           model: '{{ hermes_models["glm-flash"] }}'
 
-    - name: Check the commit-trailer rule in AGENTS.md appears only when trailers are set
+    - name: Check the commit conventions in AGENTS.md follow the identity and trailer settings
       vars:
-        agent_commit_trailers: '{{ trailers_case }}'
+        agent_git_name: '{{ case.name }}'
+        agent_git_email: '{{ case.email }}'
+        agent_commit_trailers: '{{ case.trailers }}'
         agents_md: "{{ lookup('ansible.builtin.template', playbook_dir + '/../config/software-factory/AGENTS.md') }}"
-        trailer: 'Co-Authored-By: Example <1+example@users.noreply.github.com>'
+        identity: 'ci-agent <1+ci-agent@users.noreply.github.com>'
+        trailer: 'Co-Authored-By: Example <2+example@users.noreply.github.com>'
       ansible.builtin.assert:
         that:
-          - (trailer in agents_md) == (trailers_case | length > 0)
+          - ('Commit conventions' in agents_md) == (case.name != '' or case.trailers | length > 0)
+          - (identity in agents_md) == (case.name != '')
+          - (trailer in agents_md) == (case.trailers | length > 0)
           - "'endif' not in agents_md and 'endfor' not in agents_md"
       loop:
-        - []
-        - ['Co-Authored-By: Example <1+example@users.noreply.github.com>']
+        - { name: '', email: '', trailers: [] }
+        - { name: ci-agent, email: '1+ci-agent@users.noreply.github.com', trailers: [] }
+        - { name: '', email: '', trailers: ['Co-Authored-By: Example <2+example@users.noreply.github.com>'] }
+        - { name: ci-agent, email: '1+ci-agent@users.noreply.github.com', trailers: ['Co-Authored-By: Example <2+example@users.noreply.github.com>'] }
       loop_control:
-        loop_var: trailers_case
+        loop_var: case

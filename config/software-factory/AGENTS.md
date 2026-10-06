@@ -46,14 +46,22 @@ Read `WORKFLOW.md` for the handoff and gate details.
 8. Production deployment requires explicit user authorization.
 9. Never commit secrets or directly modify production state.
 10. Prefer reviewable commits and pull requests. Preserve unrelated user changes.
-{% if agent_commit_trailers %}
-11. End every commit message with a blank line followed by these trailer lines, exactly as written (for example with `git commit --trailer '<line>'`):
+{% if (agent_git_name and agent_git_email) or agent_commit_trailers %}
 
-```text
+## Commit conventions
+
+{% if agent_git_name and agent_git_email %}
+- Author every commit as `{{ agent_git_name }} <{{ agent_git_email }}>`. The Docker terminals already use this Git identity. In a host terminal, pass `--author '{{ agent_git_name }} <{{ agent_git_email }}>'` instead. Never change `user.name` or `user.email` in any Git config.
+{% endif %}
+{% if agent_commit_trailers %}
+- End every commit message with a blank line followed by these trailer lines, exactly as written (for example with `git commit --trailer '<line>'`):
+
+  ```text
 {% for trailer in agent_commit_trailers %}
-{{ trailer }}
+  {{ trailer }}
 {% endfor %}
-```
+  ```
+{% endif %}
 {% endif %}
 
 ## Definition of Done

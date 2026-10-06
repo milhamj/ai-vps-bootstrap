@@ -55,7 +55,7 @@
   become_user: '{{ factory_user }}'
   loop: '{{ managed_profiles }}'
   register: hermes_merge_results
-  changed_when: "'CHANGED' in hermes_merge_results.stdout"
+  changed_when: hermes_merge_results.stdout | trim == 'CHANGED'
 
 - name: Install role SOUL files into the corresponding profiles
   ansible.builtin.copy:

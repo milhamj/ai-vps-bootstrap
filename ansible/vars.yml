@@ -24,6 +24,7 @@ hermes_branch: main
 # API key added once with: hermes auth add openrouter (named profiles fall back to it).
 hermes_models:
   codex: { default: 'gpt-5.6-sol', provider: openai-codex, base_url: 'https://chatgpt.com/backend-api/codex' }
+  glm: { default: 'z-ai/glm-5.3', provider: openrouter, base_url: 'https://openrouter.ai/api/v1' }
   glm-flash: { default: 'z-ai/glm-5.3-flash', provider: openrouter, base_url: 'https://openrouter.ai/api/v1' }
 hermes_main_model: codex
 hermes_docker_image: 'hermes-qa-playwright:1.63.0'
@@ -53,8 +54,8 @@ hermes_toolsets:
 # hermes_models (default: hermes_main_model).
 # The default profile always has a gateway (hermes-gateway.service).
 hermes_profiles:
-  - { name: hoe, role: head-of-engineering, gateway: true, toolsets: main, model: codex }
-  - { name: techlead, role: tech-lead, model: codex }
+  - { name: hoe, role: head-of-engineering, gateway: true, toolsets: main, model: glm }
+  - { name: techlead, role: tech-lead, model: glm }
   - { name: engineer, role: engineer, model: glm-flash }
   - { name: qa, role: qa, model: glm-flash }
 base_packages:

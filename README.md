@@ -29,7 +29,7 @@ The specialists run their commands in Docker containers that can only see the fa
 - A fresh Ubuntu 24.04 VPS with a non-root sudo user who can log in with an SSH key. If your provider only gives you `root`, run `scripts/create-admin-user.sh <user>` as root first (see below).
 - Back up any existing data before applying to a machine that is not fresh.
 - Review `ansible/vars.yml`, especially `docker_group_access`. Membership in the Docker group grants broad control of the host.
-- By default the main profile, `hoe`, and `techlead` use `gpt-5.6-sol` through the `openai-codex` provider (a ChatGPT subscription), and `engineer` and `qa` use `z-ai/glm-5.3-flash` through OpenRouter (an OpenRouter API key with credits). Change this with `hermes_models`, `hermes_main_model`, and each profile's `model`.
+- By default the main profile uses `gpt-5.6-sol` through the `openai-codex` provider (a ChatGPT subscription); `hoe` and `techlead` use `z-ai/glm-5.3`, and `engineer` and `qa` use `z-ai/glm-5.3-flash`, both through OpenRouter (an OpenRouter API key with credits). Change this with `hermes_models`, `hermes_main_model`, and each profile's `model`.
 
 ## Settings
 
@@ -97,7 +97,7 @@ If the playbook added the user to the Docker group, close the SSH session and re
 ```bash
 if [[ ! -x "$HOME/.local/bin/hermes" ]]; then make hermes-install; fi
 ~/.local/bin/hermes setup           # Full setup; sign in with OpenAI Codex (shared by all profiles)
-~/.local/bin/hermes auth add openrouter   # paste an OpenRouter API key (used by engineer and qa)
+~/.local/bin/hermes auth add openrouter   # paste an OpenRouter API key (used by hoe, techlead, engineer, qa)
 make configure                      # 1st: create hoe/techlead/engineer/qa, apply managed settings
 ~/.local/bin/hermes gateway setup   # Telegram for the main profile
 ~/.local/bin/hoe gateway setup      # Telegram for hoe

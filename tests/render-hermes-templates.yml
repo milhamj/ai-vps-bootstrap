@@ -23,6 +23,7 @@
           - rendered.platform_toolsets.cli == item.toolsets
           - rendered.platform_toolsets.telegram == item.toolsets
           - rendered.terminal.backend == item.backend
+          - item.backend != 'docker' or rendered.terminal.docker_forward_env == agent_forward_env
         fail_msg: '{{ item.template }} did not render to the expected Hermes settings'
       loop:
         - template: default.yml.j2

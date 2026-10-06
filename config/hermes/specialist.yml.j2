@@ -8,4 +8,4 @@ terminal:
   docker_mount_cwd_to_workspace: false
   docker_volumes:
     - '{{ factory_home }}/{{ factory_relative_path }}:/workspace'
-  docker_forward_env: []
+  docker_forward_env: {{ agent_forward_env | to_json }}

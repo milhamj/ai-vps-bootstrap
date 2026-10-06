@@ -44,6 +44,7 @@ Notable settings:
 - `git_commit_signing` (default `false`): set to `true` to require GPG-signed commits for the target user. You must restore or generate a GPG key yourself.
 - `hermes_models` and `hermes_main_model`: named model presets (`default` model, `provider`, `base_url`) and the one the main profile uses. Each entry in `hermes_profiles` picks a preset with `model:` (default: `hermes_main_model`). Credentials are per provider, not per profile: sign in to `openai-codex` with `hermes setup` and add an OpenRouter key once with `hermes auth add openrouter`; named profiles without their own credentials use the main profile's.
 - `agent_git_name` and `agent_git_email` (default empty): the Git identity for commits the agents make in their Docker terminals (`hoe`, `techlead`, `engineer`, `qa`). It is built into the terminal image, so run `make image-qa` after changing it. While empty, agent commits fail with Git's "Please tell me who you are". The main profile runs on the host and uses your own Git config.
+- `agent_forward_env` (default empty): names of variables passed from each specialist profile's `.env` into its Docker terminal, for example `[GH_TOKEN]`. See [GitHub access for agents](#github-access-for-agents).
 - `agent_commit_trailers` (default empty): trailer lines, such as `Co-Authored-By: …`, that every agent commit message must end with. When set, the factory `AGENTS.md` gets a rule listing them. It is an instruction to the agents, not an enforced Git hook.
 - `hermes_toolsets`: the Hermes tools enabled for each profile's `cli` and `telegram` platforms. `main` (default and `hoe`) adds delegation, connections, vision, cronjob, and image_gen; `specialist` (the Kanban workers) leaves those out. A profile picks one with `toolsets:` in `hermes_profiles`.
 - Every profile also gets `proxy.enabled: false` (iron-proxy egress needs static API keys, which the OAuth-based `openai-codex` provider does not have), `compression.threshold: 0.5`, and the local headless browser. These live in `config/hermes/common.yml.j2`.
@@ -78,6 +79,7 @@ agent_git_name: 'my-agent-bot'
 agent_git_email: '12345678+my-agent-bot@users.noreply.github.com'
 agent_commit_trailers:
   - 'Co-Authored-By: Your Name <87654321+your-username@users.noreply.github.com>'
+agent_forward_env: [GH_TOKEN]   # only if agents push to GitHub; see "GitHub access for agents"
 ```
 
 Add any other overrides from the Settings section, such as `ssh_password_login: true`. You can change these later: run `make configure` for trailers and Hermes settings, and `make image-qa` for the Git identity.
@@ -129,13 +131,36 @@ On a fresh VPS without Hermes, `make hermes-install` pins the application source
 
 The factory root is `/home/<user>/software-factory`. If only an older-layout directory `/home/<user>/projects/software-factory` exists, the playbook moves it to the new path and preserves its contents. If both paths exist, it stops so you can reconcile them without overwriting either one. Projects are kept under `projects/<project-name>/`; repositories and required docs are organized as described in its `AGENTS.md` and `WORKFLOW.md`.
 
-The default Hermes profile uses the `local` terminal backend and runs as the configured Unix user. Specialist profiles use the `docker` terminal backend, start in `/workspace`, and receive only the read-write mount `/home/<user>/software-factory:/workspace`. Automatic CWD mounting is disabled and no host environment variables are forwarded.
+The default Hermes profile uses the `local` terminal backend and runs as the configured Unix user. Specialist profiles use the `docker` terminal backend, start in `/workspace`, and receive only the read-write mount `/home/<user>/software-factory:/workspace`. Automatic CWD mounting is disabled, and only the variables named in `agent_forward_env` (none by default) are passed in, taken from the profile's own `.env`.
 
 The container volume list scopes the specialist terminal environment. The gateway process itself runs as the configured Unix user. Each Hermes profile has separate configuration and session state.
+
+## GitHub access for agents
+
+The specialist containers cannot see the host's SSH keys or Git credentials. To let agents push branches and open pull requests, give them a GitHub token through the profile's `.env`. The terminal image includes the GitHub CLI (`gh`), and Git uses it to authenticate `https://github.com` with that token. `git@github.com:` remotes are rewritten to HTTPS so they use it too.
+
+1. Use a separate GitHub account for the agents (the one in `agent_git_name`), and add it as a collaborator only on the repositories they should work on.
+2. On that account, create a token at github.com/settings/tokens:
+   - **Classic token** with the `repo` and `workflow` scopes. It reaches only the repositories the account was added to. This is the option that works for repositories owned by another personal account.
+   - Or a **fine-grained token**, if the repositories belong to the agent account itself or to an organization: Contents, Pull requests, and Workflows set to read and write.
+3. Add it to the `.env` of each profile that pushes or opens pull requests (usually `engineer` and `qa`), readable only by you:
+   ```bash
+   for p in engineer qa; do
+     f=~/.hermes/profiles/$p/.env
+     touch "$f" && chmod 600 "$f"
+     read -rsp "GH_TOKEN for $p: " t && echo && printf 'GH_TOKEN=%s\n' "$t" >> "$f"
+   done
+   ```
+   `read -s` keeps the token out of your shell history and screen.
+4. Set `agent_forward_env: [GH_TOKEN]` in `ansible/local-vars.yml`, then run `make image-qa` (adds `gh`) and `make configure`.
+5. Check: `qa chat`, then ask it to run `gh auth status`. It should report being logged in as the agent account. The token never needs to appear in chat, Telegram, or Kanban.
+
+Profiles without `GH_TOKEN` in their `.env` get nothing, even though the name is forwarded for all specialists. Revoke the token on GitHub at any time to cut off access.
 
 ## Security notes
 
 - Docker writes its own iptables rules, so a port published with `docker run -p` or Compose `ports:` is reachable from the internet even though UFW denies incoming traffic. This setup publishes no ports. If you add services, bind them to `127.0.0.1` or put them behind a reverse proxy.
+- Agents can read any token you forward with `agent_forward_env`, so scope it to the agent account and the repositories it needs.
 - Specialist containers get only the factory mount. Do not add `~/.hermes`, `/var/run/docker.sock`, or the whole home directory to `docker_volumes`; `make verify` fails if the mount list changes.
 - Membership in the `docker` group is equivalent to root on the host (see `docker_group_access`).
 

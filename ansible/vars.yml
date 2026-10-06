@@ -33,6 +33,10 @@ hermes_docker_image: 'hermes-qa-playwright:1.63.0'
 # Example: agent_git_name: my-agent-bot, agent_git_email: 'id+my-agent-bot@users.noreply.github.com'
 agent_git_name: ''
 agent_git_email: ''
+# Environment variables passed from each specialist profile's .env into its Docker terminal, by
+# name. Set to [GH_TOKEN] and put GH_TOKEN=<token> in ~/.hermes/profiles/<profile>/.env (mode 600)
+# for the profiles that push or open pull requests. Values never go in this repository.
+agent_forward_env: []
 # Trailer lines every agent commit message must end with, added as a rule in the factory AGENTS.md.
 # Example: ['Co-Authored-By: Your Name <id+username@users.noreply.github.com>']
 agent_commit_trailers: []

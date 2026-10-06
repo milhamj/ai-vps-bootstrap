@@ -14,6 +14,7 @@
 # hermes_branch: main
 # agent_git_name: 'my-agent-bot'
 # agent_git_email: 'id+my-agent-bot@users.noreply.github.com'
+# agent_forward_env: [GH_TOKEN]
 # agent_commit_trailers:
 #   - 'Co-Authored-By: Your Name <id+username@users.noreply.github.com>'
 # hermes_models:

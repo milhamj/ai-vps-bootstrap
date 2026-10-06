@@ -90,8 +90,8 @@ def main() -> int:
                 errors.append(f"{name}: automatic CWD mounting must be disabled")
             if terminal.get("docker_volumes") != [expected_volume]:
                 errors.append(f"{name}: docker_volumes must contain only {expected_volume}")
-            if terminal.get("docker_forward_env") != []:
-                errors.append(f"{name}: docker_forward_env must be empty")
+            if terminal.get("docker_forward_env") != settings["agent_forward_env"]:
+                errors.append(f"{name}: docker_forward_env must be exactly agent_forward_env")
 
     soul_paths = {
         "default": hermes_home / "SOUL.md",

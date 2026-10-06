@@ -55,6 +55,10 @@ docker run --rm --workdir /workspace --volume "$factory_root:/workspace" "$docke
   exit 1
 }
 
+docker run --rm "$docker_image" gh --version >/dev/null 2>&1 || {
+  echo 'FAIL: terminal image has no GitHub CLI (gh); run make image-qa' >&2
+  exit 1
+}
 for key in name email; do
   expected=$(setting "agent_git_$key")
   [[ -z $expected ]] && continue

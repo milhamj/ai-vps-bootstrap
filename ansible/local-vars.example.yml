@@ -27,7 +27,7 @@
 #   main: [web, browser, terminal, file, code_execution, skills, todo, kanban, memory, session_search, clarify, delegation, vision, connections, cronjob, image_gen]
 #   specialist: [terminal, file, code_execution, web, browser, skills, todo, kanban, memory, session_search, clarify]
 # hermes_profiles:
-#   - { name: hoe, role: head-of-engineering, gateway: true, toolsets: main, model: glm }
+#   - { name: hoe, role: head-of-engineering, gateway: true, toolsets: main, model: glm-flash }
 #   - { name: techlead, role: tech-lead, model: glm }
 #   - { name: engineer, role: engineer, model: glm-flash }
 #   - { name: qa, role: qa, model: glm-flash }

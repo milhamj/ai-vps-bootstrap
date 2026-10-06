@@ -36,14 +36,15 @@
 
     - name: Check the commit-trailer rule in AGENTS.md appears only when trailers are set
       vars:
+        agent_commit_trailers: '{{ trailers_case }}'
         agents_md: "{{ lookup('ansible.builtin.template', playbook_dir + '/../config/software-factory/AGENTS.md') }}"
         trailer: 'Co-Authored-By: Example <1+example@users.noreply.github.com>'
       ansible.builtin.assert:
         that:
-          - "(trailer in agents_md) == (agent_commit_trailers | length > 0)"
-          - "'{%' not in agents_md"
+          - (trailer in agents_md) == (trailers_case | length > 0)
+          - "'endif' not in agents_md and 'endfor' not in agents_md"
       loop:
         - []
         - ['Co-Authored-By: Example <1+example@users.noreply.github.com>']
       loop_control:
-        loop_var: agent_commit_trailers
+        loop_var: trailers_case

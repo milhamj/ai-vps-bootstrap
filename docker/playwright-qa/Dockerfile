@@ -42,6 +42,8 @@ RUN install -d -m 0755 /etc/apt/keyrings \
 # with ANDROID_SDK=true accepts the Android SDK licence terms. The SDK is owned by the container
 # user so Gradle can add components it needs; those last until the container is recreated.
 # These variables are harmless when the toolchain is not installed.
+# `yes` is wrapped because the base image runs RUN steps with pipefail, and `yes` always ends
+# with SIGPIPE (exit 141) once sdkmanager stops reading.
 ENV ANDROID_HOME=/opt/android-sdk \
     ANDROID_SDK_ROOT=/opt/android-sdk \
     PATH=/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:$PATH
@@ -62,7 +64,7 @@ RUN if [ "$ANDROID_SDK" = "true" ]; then \
       python3 -m zipfile -e "$tmp/tools.zip" "$tmp"; \
       mkdir -p "$ANDROID_HOME/cmdline-tools" && mv "$tmp/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"; \
       chmod +x "$ANDROID_HOME"/cmdline-tools/latest/bin/*; \
-      yes | sdkmanager --licenses >/dev/null; \
+      (yes || true) | sdkmanager --licenses >/dev/null; \
       sdkmanager --install $ANDROID_SDK_PACKAGES; \
       chown -R ${HERMES_UID}:${HERMES_GID} "$ANDROID_HOME"; \
       rm -rf "$tmp"; \

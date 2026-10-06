@@ -34,7 +34,7 @@ jobs:
   e2e:
     runs-on: ubuntu-24.04
     needs: lint
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Remove the runner's preinstalled Docker so the playbook installs Ubuntu's packages
@@ -70,5 +70,28 @@ jobs:
             > ansible/local-vars.yml
       - name: make image-qa
         run: sg docker -c 'make image-qa'
-      - name: make verify
+      - name: make verify (before Hermes)
+        run: sg docker -c 'make verify'
+
+      # Hermes layer: everything that needs no interactive sign-in. Model sign-in, Telegram
+      # gateways, and real model calls stay manual (see docs/next-steps.md).
+      - name: make hermes-install
+        run: make hermes-install
+      - name: make configure creates and configures the Hermes profiles
+        run: sg docker -c 'make configure'
+      - name: make configure is idempotent with Hermes installed
+        run: |
+          sg docker -c './scripts/configure.sh' | tee configure-hermes.log
+          grep -Eq 'changed=0 +unreachable=0 +failed=0' configure-hermes.log
+      - name: make verify fails while OpenRouter profiles have no key
+        run: |
+          if sg docker -c 'make verify' 2> verify-missing.log; then
+            echo 'make verify passed without provider keys' >&2; exit 1
+          fi
+          grep -q 'make provider-keys' verify-missing.log
+      - name: make provider-keys sets a key on every OpenRouter profile
+        run: |
+          printf 'sk-or-v1-ci-placeholder\n' | make provider-keys
+          ./scripts/set-provider-keys.sh --check
+      - name: make verify (with Hermes)
         run: sg docker -c 'make verify'

@@ -21,7 +21,7 @@ The default Hermes profile has host terminal access; the specialist profiles use
 - For byte-for-byte image rebuilds, a snapshot of the OS package repositories used by `playwright install --with-deps`. The base image is pinned by digest, but those package repositories are not immutable.
 - Whether to restore existing Git signing keys or create fresh keys. Never send private keys or passphrases.
 - Backup/restore choices for repositories, Hermes state, OAuth sessions, messaging configuration, and other persistent data.
-- A full run including `make hermes-install` and Hermes sign-in. CI (`.github/workflows/ci.yml`) covers install, configure, the QA image, and verify on Ubuntu 24.04, but not Hermes itself.
+- CI (`.github/workflows/ci.yml`) runs the whole non-interactive flow on Ubuntu 24.04: install, the QA image, `make hermes-install`, profile creation, `make provider-keys`, and `make verify`. Still manual: ChatGPT sign-in (`hermes setup`), Telegram gateways, and a real task through the agents.
 
 The model, provider, base URL, Docker image name, and profiles are set in `ansible/vars.yml` (overridable in `ansible/local-vars.yml`); workflows and agent guidance live in `config/software-factory/`. Keep tokens, private keys, passphrases, recovery codes, and other secret values out of notes and config exports.
 

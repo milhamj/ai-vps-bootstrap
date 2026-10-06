@@ -45,6 +45,7 @@ Notable settings:
 - `hermes_models` and `hermes_main_model`: named model presets (`default` model, `provider`, `base_url`) and the one the main profile uses. Each entry in `hermes_profiles` picks a preset with `model:` (default: `hermes_main_model`). Sign in to `openai-codex` with `hermes setup`. API keys for OpenRouter are set on each profile that uses it by `make provider-keys`, which asks for the key once (hidden) and runs `<profile> config set OPENROUTER_API_KEY` for each; `make verify` fails if one is missing. Run it again after adding a profile or changing a model preset.
 - `agent_git_name` and `agent_git_email` (default empty): the Git identity for commits the agents make in their Docker terminals (`hoe`, `techlead`, `engineer`, `qa`). It is built into the terminal image, so run `make image-qa` after changing it, and written into the factory `AGENTS.md` (Commit conventions) so every agent, including the main profile on the host, commits as it; run `make configure` after changing it. While empty, agent commits fail with Git's "Please tell me who you are". The main profile runs on the host and uses your own Git config.
 - `agent_forward_env` (default empty): names of variables passed from each specialist profile's `.env` into its Docker terminal, for example `[GH_TOKEN]`. See [GitHub access for agents](#github-access-for-agents).
+- `android_sdk` (default `false`): add the Android toolchain to the terminal image. See [Android builds](#android-builds).
 - `agent_commit_trailers` (default empty): trailer lines, such as `Co-Authored-By: …`, that every agent commit message must end with. When set, the Commit conventions section of the factory `AGENTS.md` lists them. It is an instruction to the agents, not an enforced Git hook.
 - `hermes_main_fallback` (default `glm-flash`): the preset the main profile switches to when its model fails, for example when the ChatGPT subscription hits its limit. Written as Hermes `fallback_model`. Profiles can set their own with `fallback:`. `make provider-keys` also covers fallback providers, so the main profile gets an OpenRouter key for it. Set it to `''` to disable; Hermes then keeps any `fallback_model` already in the profile, so remove that by hand.
 - `hermes_toolsets`: the Hermes tools enabled for each profile's `cli` and `telegram` platforms. `main` (default and `hoe`) adds delegation, connections, vision, cronjob, and image_gen; `specialist` (the Kanban workers) leaves those out. A profile picks one with `toolsets:` in `hermes_profiles`.
@@ -158,6 +159,19 @@ The specialist containers cannot see the host's SSH keys or Git credentials. To 
 5. Check: `qa chat`, then ask it to run `gh auth status`. It should report being logged in as the agent account. The token never needs to appear in chat, Telegram, or Kanban.
 
 Profiles without `GH_TOKEN` in their `.env` get nothing, even though the name is forwarded for all specialists. Revoke the token on GitHub at any time to cut off access.
+
+## Android builds
+
+Set `android_sdk: true` in `ansible/local-vars.yml`, then run `make image-qa` and `make configure`. The terminal image then includes:
+
+- Temurin JDK 17 and the Android SDK command-line tools, both pinned by version and SHA-256.
+- The packages in `android_sdk_packages` (default `platform-tools`, `platforms;android-36`, `build-tools;36.0.0`), with `ANDROID_HOME` set. The SDK belongs to the container user, so Gradle can download other components a project needs; those last until the container is recreated, so add regularly needed ones to `android_sdk_packages`.
+
+Enabling it accepts the Android SDK licence terms, and makes the image about 3-5 GB larger.
+
+Gradle's cache lives on the host in `~/.cache/hermes-gradle`, mounted as `~/.gradle` in the specialist containers, so dependencies are downloaded once rather than per container. Its managed `gradle.properties` caps the Gradle JVM with `android_gradle_jvmargs` (default 2 GB heap), turns off long-lived Gradle and Kotlin daemons, and limits Gradle to 2 workers. An Android build still needs 2-4 GB of RAM, so on a small VPS avoid running several builds at once. Emulator and instrumented tests are not supported: they need KVM inside the container.
+
+`make verify` checks the JDK, each configured package, and the Gradle cache when `android_sdk` is enabled.
 
 ## Security notes
 

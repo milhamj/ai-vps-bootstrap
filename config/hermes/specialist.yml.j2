@@ -8,4 +8,7 @@ terminal:
   docker_mount_cwd_to_workspace: false
   docker_volumes:
     - '{{ factory_home }}/{{ factory_relative_path }}:/workspace'
+{% if android_sdk | bool %}
+    - '{{ factory_home }}/.cache/hermes-gradle:/home/hermes/.gradle'
+{% endif %}
   docker_forward_env: {{ agent_forward_env | to_json }}

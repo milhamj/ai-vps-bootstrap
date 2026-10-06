@@ -1,0 +1,8 @@
+# Managed by ai-vps-bootstrap (android_gradle_jvmargs). Mounted as ~/.gradle in the specialist
+# terminals; settings here override a project's own gradle.properties.
+org.gradle.jvmargs={{ android_gradle_jvmargs }}
+# No long-lived daemons: several agent containers each keeping a 2 GB Gradle and Kotlin daemon
+# alive would exhaust a small VPS. Builds start a little slower instead.
+org.gradle.daemon=false
+kotlin.compiler.execution.strategy=in-process
+org.gradle.workers.max=2

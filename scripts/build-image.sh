@@ -13,6 +13,8 @@ docker build --platform linux/amd64 -f "$repo_dir/docker/playwright-qa/Dockerfil
   --build-arg "HERMES_UID=$(id -u "$user")" --build-arg "HERMES_GID=$(id -g "$user")" \
   --build-arg "AGENT_GIT_NAME=$(setting agent_git_name)" \
   --build-arg "AGENT_GIT_EMAIL=$(setting agent_git_email)" \
+  --build-arg "ANDROID_SDK=$(setting android_sdk)" \
+  --build-arg "ANDROID_SDK_PACKAGES=$(setting android_sdk_packages)" \
   -t "$image" "$repo_dir/docker/playwright-qa"
 
 new_id=$(docker image inspect --format '{{.Id}}' "$image")

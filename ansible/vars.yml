@@ -41,6 +41,13 @@ agent_git_email: ''
 # name. Set to [GH_TOKEN] and put GH_TOKEN=<token> in ~/.hermes/profiles/<profile>/.env (mode 600)
 # for the profiles that push or open pull requests. Values never go in this repository.
 agent_forward_env: []
+# Android toolchain in the specialist terminal image: Temurin JDK 17 and the Android SDK with these
+# packages (about 3-5 GB). Enabling it accepts the Android SDK licence terms. Run make image-qa and
+# make configure after changing it. Gradle's cache is kept on the host in ~/.cache/hermes-gradle
+# (mounted as the container's ~/.gradle), with its JVM capped by android_gradle_jvmargs.
+android_sdk: false
+android_sdk_packages: ['platform-tools', 'platforms;android-36', 'build-tools;36.0.0']
+android_gradle_jvmargs: '-Xmx2g -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8'
 # Trailer lines every agent commit message must end with, added as a rule in the factory AGENTS.md.
 # Example: ['Co-Authored-By: Your Name <id+username@users.noreply.github.com>']
 agent_commit_trailers: []

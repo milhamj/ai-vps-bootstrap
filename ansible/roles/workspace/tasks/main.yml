@@ -62,6 +62,34 @@
     mode: '0640'
   loop: "{{ ['main'] + hermes_profiles | map(attribute='role') | list }}"
 
+# Created separately and owned by the user: the playbook runs as root, so letting the next task
+# create ~/.cache as a parent would leave it root-owned and unwritable for the user's own tools.
+- name: Ensure the user's cache directory exists
+  ansible.builtin.file:
+    path: '{{ factory_home }}/.cache'
+    state: directory
+    owner: '{{ factory_user }}'
+    group: '{{ factory_group }}'
+  when: android_sdk | bool
+
+- name: Create the Gradle cache shared by the specialist terminals
+  ansible.builtin.file:
+    path: '{{ factory_home }}/.cache/hermes-gradle'
+    state: directory
+    owner: '{{ factory_user }}'
+    group: '{{ factory_group }}'
+    mode: '0750'
+  when: android_sdk | bool
+
+- name: Install Gradle settings for the specialist terminals
+  ansible.builtin.template:
+    src: gradle.properties.j2
+    dest: '{{ factory_home }}/.cache/hermes-gradle/gradle.properties'
+    owner: '{{ factory_user }}'
+    group: '{{ factory_group }}'
+    mode: '0640'
+  when: android_sdk | bool
+
 - name: Read host Git signing preferences
   ansible.builtin.command:
     argv:

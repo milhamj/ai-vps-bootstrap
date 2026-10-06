@@ -25,6 +25,7 @@
           - rendered.platform_toolsets.telegram == item.toolsets
           - rendered.terminal.backend == item.backend
           - item.backend != 'docker' or rendered.terminal.docker_forward_env == agent_forward_env
+          - item.backend != 'docker' or (rendered.terminal.docker_volumes | length) == (2 if android_sdk | bool else 1)
         fail_msg: '{{ item.template }} did not render to the expected Hermes settings'
       loop:
         - template: default.yml.j2

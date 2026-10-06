@@ -94,7 +94,9 @@ def main() -> int:
             if terminal.get("cwd") != ".":
                 errors.append("default: terminal.cwd must remain .")
         else:
-            expected_volume = f"{factory_root}:/workspace"
+            expected_volumes = [f"{factory_root}:/workspace"]
+            if settings["android_sdk"]:
+                expected_volumes.append(f"{home}/.cache/hermes-gradle:/home/hermes/.gradle")
             if terminal.get("backend") != "docker":
                 errors.append(f"{name}: terminal.backend must be docker")
             if terminal.get("cwd") != "/workspace":
@@ -103,8 +105,8 @@ def main() -> int:
                 errors.append(f"{name}: docker_image does not match the configured settings")
             if terminal.get("docker_mount_cwd_to_workspace") is not False:
                 errors.append(f"{name}: automatic CWD mounting must be disabled")
-            if terminal.get("docker_volumes") != [expected_volume]:
-                errors.append(f"{name}: docker_volumes must contain only {expected_volume}")
+            if terminal.get("docker_volumes") != expected_volumes:
+                errors.append(f"{name}: docker_volumes must be exactly {expected_volumes}")
             if terminal.get("docker_forward_env") != settings["agent_forward_env"]:
                 errors.append(f"{name}: docker_forward_env must be exactly agent_forward_env")
 

@@ -55,6 +55,22 @@ docker run --rm --workdir /workspace --volume "$factory_root:/workspace" "$docke
   exit 1
 }
 
+if is_true "$(setting android_sdk)"; then
+  android_check=$(docker run --rm "$docker_image" sh -c 'java -version && sdkmanager --list_installed' 2>&1) || {
+    echo 'FAIL: android_sdk is enabled but the terminal image has no working JDK/Android SDK; run make image-qa' >&2
+    exit 1
+  }
+  for package in $(setting android_sdk_packages); do
+    grep -qF "$package " <<<"$android_check" || {
+      echo "FAIL: Android SDK package $package is not installed in the terminal image; run make image-qa" >&2
+      exit 1
+    }
+  done
+  [[ -f "$target_home/.cache/hermes-gradle/gradle.properties" ]] || {
+    echo 'FAIL: android_sdk is enabled but the Gradle cache is not set up; run make configure' >&2
+    exit 1
+  }
+fi
 docker run --rm "$docker_image" gh --version >/dev/null 2>&1 || {
   echo 'FAIL: terminal image has no GitHub CLI (gh); run make image-qa' >&2
   exit 1

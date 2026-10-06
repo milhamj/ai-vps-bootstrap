@@ -29,6 +29,33 @@ jobs:
       - name: ansible-lint
         run: ansible-lint --profile min ansible/playbook.yml
 
+  # Builds the terminal image with android_sdk enabled and checks the toolchain inside it.
+  android-image:
+    runs-on: ubuntu-24.04
+    needs: lint
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable the Android toolchain
+        run: |
+          sudo apt-get install -y python3-yaml
+          printf '%s\n' 'android_sdk: true' > ansible/local-vars.yml
+      - name: Build the image (downloads are checked against pinned SHA-256 sums)
+        run: ./scripts/build-image.sh
+      - name: JDK 17 and the configured SDK packages are installed
+        run: |
+          image=$(python3 scripts/effective_vars.py hermes_docker_image)
+          out=$(docker run --rm "$image" sh -c 'java -version 2>&1 && sdkmanager --list_installed 2>&1')
+          echo "$out"
+          grep -q 'version "17' <<<"$out"
+          for package in $(python3 scripts/effective_vars.py android_sdk_packages); do
+            grep -qF "$package " <<<"$out"
+          done
+      - name: The container user can add SDK components (owned by HERMES_UID)
+        run: |
+          image=$(python3 scripts/effective_vars.py hermes_docker_image)
+          docker run --rm "$image" sh -c 'test -w "$ANDROID_HOME" && echo writable'
+
   # Runs the real setup on a GitHub Ubuntu 24.04 runner as a stand-in for a fresh VPS.
   # Hermes itself is not installed: it needs interactive sign-in, so verify reports it as pending.
   e2e:

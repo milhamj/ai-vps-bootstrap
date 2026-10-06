@@ -15,6 +15,9 @@
 # agent_git_name: 'my-agent-bot'
 # agent_git_email: 'id+my-agent-bot@users.noreply.github.com'
 # agent_forward_env: [GH_TOKEN]
+# android_sdk: true
+# android_sdk_packages: ['platform-tools', 'platforms;android-36', 'build-tools;36.0.0']
+# android_gradle_jvmargs: '-Xmx2g -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8'
 # agent_commit_trailers:
 #   - 'Co-Authored-By: Your Name <id+username@users.noreply.github.com>'
 # hermes_models:

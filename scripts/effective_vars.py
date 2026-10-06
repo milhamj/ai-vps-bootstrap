@@ -3,6 +3,7 @@
 
 Top-level keys in local-vars.yml replace those in vars.yml, matching Ansible's default
 variable precedence for --extra-vars. Usage: effective_vars.py KEY
+Prints booleans as true/false and lists space-separated, for use from shell scripts.
 """
 from __future__ import annotations
 import sys
@@ -37,7 +38,13 @@ def main() -> int:
     if key not in settings:
         print(f"unknown setting: {key}", file=sys.stderr)
         return 1
-    print(settings[key])
+    value = settings[key]
+    if isinstance(value, bool):
+        print(str(value).lower())
+    elif isinstance(value, list):
+        print(" ".join(str(item) for item in value))
+    else:
+        print(value)
     return 0
 
 

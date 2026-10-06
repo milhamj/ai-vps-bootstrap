@@ -36,7 +36,7 @@ fi
 missing=0
 for entry in "${entries[@]}"; do
   read -r profile var <<<"$entry"
-  if has_key "$profile" "$var"; then state=set; else state=missing; missing=1; fi
+  if has_key "$profile" "$var"; then state='set'; else state='missing'; missing=1; fi
   printf '  %-10s %-20s %s\n' "$profile" "$var" "$state"
 done
 if [[ ${1:-} == --check ]]; then

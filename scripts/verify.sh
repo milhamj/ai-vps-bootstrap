@@ -71,6 +71,14 @@ if is_true "$(setting android_sdk)"; then
     exit 1
   }
 fi
+docker run --rm "$docker_image" sh -c '[ "$(getent passwd "$(id -u)" | cut -d: -f1,6)" = "hermes:/home/hermes" ]' || {
+  echo 'FAIL: the terminal image has no hermes account for its UID; run make image-qa' >&2
+  exit 1
+}
+docker run --rm "$docker_image" sh -c 'test -w /ms-playwright' || {
+  echo 'FAIL: /ms-playwright is not writable by the container user; run make image-qa' >&2
+  exit 1
+}
 docker run --rm "$docker_image" gh --version >/dev/null 2>&1 || {
   echo 'FAIL: terminal image has no GitHub CLI (gh); run make image-qa' >&2
   exit 1

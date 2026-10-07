@@ -46,6 +46,7 @@ Read `WORKFLOW.md` for the handoff and gate details.
 8. Production deployment requires explicit user authorization.
 9. Never commit secrets or directly modify production state.
 10. Prefer reviewable commits and pull requests. Preserve unrelated user changes.
+11. When creating Kanban tasks, do not set a model or provider. The worker then uses the model configured for its profile; a model on the task overrides it.
 {% if (agent_git_name and agent_git_email) or agent_commit_trailers %}
 
 ## Commit conventions

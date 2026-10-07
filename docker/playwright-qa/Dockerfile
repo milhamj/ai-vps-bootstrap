@@ -13,13 +13,27 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV HOME=/home/hermes
 ENV NPM_CONFIG_CACHE=/home/hermes/.npm
 
+# /ms-playwright belongs to the container user, so projects pinned to another Playwright version
+# can download their browsers next to the bundled ones (kept until the container is recreated).
 RUN mkdir -p /home/hermes/.npm \
     && npx -y playwright@1.63.0 install --with-deps chromium firefox webkit \
-    && chmod -R a+rX /ms-playwright \
+    && chown -R ${HERMES_UID}:${HERMES_GID} /ms-playwright \
+    && chmod -R u+rwX,a+rX /ms-playwright \
     && chown -R ${HERMES_UID}:${HERMES_GID} /home/hermes \
     && chmod 0755 /home/hermes \
     && chmod -R u+rwX /home/hermes/.npm \
     && rm -rf /var/lib/apt/lists/*
+
+# A passwd/group entry for the container user, so tools that look up the current user (Gradle,
+# Java's user.home, ssh, git) find the name "hermes" and home /home/hermes. The base image already
+# has an account with UID 1000; when HERMES_UID is taken, that account is renamed instead.
+RUN if ! getent group "${HERMES_GID}" >/dev/null; then groupadd -g "${HERMES_GID}" hermes; fi \
+    && existing=$(getent passwd "${HERMES_UID}" | cut -d: -f1 || true) \
+    && if [ -n "$existing" ]; then \
+         usermod -l hermes -d /home/hermes -g "${HERMES_GID}" -s /bin/bash "$existing"; \
+       else \
+         useradd -u "${HERMES_UID}" -g "${HERMES_GID}" -d /home/hermes -M -s /bin/bash hermes; \
+       fi
 
 # GitHub CLI for pull requests. Git uses it as the credential helper for https://github.com, so a
 # GH_TOKEN (or GITHUB_TOKEN) forwarded into the container authenticates both gh and git push.

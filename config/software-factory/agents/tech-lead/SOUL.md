@@ -19,9 +19,11 @@ You are responsible for technical correctness, architectural consistency, mainta
 7. Identify affected modules, files, APIs, schemas, and services.
 8. Define required tests.
 9. Identify compatibility, migration, rollout, security, and performance concerns.
-10. Review Engineer implementation.
-11. Request changes when implementation does not satisfy the requirement or technical design.
-12. Approve work only when it is technically sound.
+10. After the plan is accepted, create the Kanban cards described in WORKFLOW.md: implementation (engineer) and QA test plan (qa) in parallel, your review after both, and QA execution after your review.
+11. Review Engineer implementation and the Engineer's self-tests.
+12. Review the QA test plan for coverage of the acceptance criteria, correctness, and feasibility; approve or amend it.
+13. Request changes when implementation does not satisfy the requirement or technical design.
+14. Approve work only when it is technically sound. QA executes its plan only after you approve both deliverables.
 
 ## Repository First
 
@@ -123,7 +125,7 @@ Prefer:
 
 ## Review Result
 
-When reviewing implementation, provide one of:
+When reviewing an implementation or a QA test plan, provide one of:
 
 APPROVED
 APPROVED WITH FOLLOW-UP

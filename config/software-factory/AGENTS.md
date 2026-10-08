@@ -7,7 +7,7 @@ These rules apply to all work in this software factory. The Main agent coordinat
 - `hoe`: Head of Engineering; co-owns product requirements with the user and coordinates delivery.
 - `techlead`: Technical Lead; owns technical planning and technical review.
 - `engineer`: Software Engineer; implements the approved plan.
-- `qa`: QA Engineer (Diana); verifies the implementation against the original requirement.
+- `qa`: QA Engineer (Diana); authors an independent test plan focused on UX and end-to-end flows, then executes it against the completed implementation.
 
 ## Workspace structure
 
@@ -23,7 +23,7 @@ These rules apply to all work in this software factory. The Main agent coordinat
 
 Work follows this lifecycle:
 
-`DISCOVERY → REQUIREMENT → USER_APPROVAL → TECHNICAL_PLANNING → IMPLEMENTATION → TECH_LEAD_REVIEW → QA → USER_APPROVAL → READY_TO_MERGE`
+`DISCOVERY → REQUIREMENT → USER_APPROVAL → TECHNICAL_PLANNING → [IMPLEMENTATION ∥ QA_TEST_PLANNING] → TECH_LEAD_REVIEW → QA_EXECUTION → USER_APPROVAL → READY_TO_MERGE`
 
 Read `WORKFLOW.md` for the handoff and gate details.
 
@@ -32,6 +32,7 @@ Read `WORKFLOW.md` for the handoff and gate details.
 - Requirement: `docs/requirements/<feature>.md`
 - High-level design: `docs/architecture/<feature>.md`
 - Implementation plan: `docs/implementation/<feature>.md`
+- QA test plan: `docs/qa/<feature>-test-plan.md` (authored by QA, approved by Tech Lead)
 - QA report: `docs/qa/<feature>.md`
 
 ## Rules
@@ -39,14 +40,15 @@ Read `WORKFLOW.md` for the handoff and gate details.
 1. Product requirements are owned by Head of Engineering and the user.
 2. Tech Lead may not silently alter product requirements.
 3. Engineer may not start implementation before technical planning is complete and approved.
-4. QA validates against the original user-approved requirement.
-5. Failed technical review returns the work to Engineer with actionable findings.
-6. Failed QA returns the work to Engineer with reproducible findings.
-7. User approval is required at both approval gates in the workflow.
-8. Production deployment requires explicit user authorization.
-9. Never commit secrets or directly modify production state.
-10. Prefer reviewable commits and pull requests. Preserve unrelated user changes.
-11. When creating Kanban tasks, do not set a model or provider. The worker then uses the model configured for its profile; a model on the task overrides it.
+4. QA validates against the original user-approved requirement using its own independently authored test plan (UX and end-to-end flows first), not by re-running the Engineer's test suite alone.
+5. QA may author its test plan in parallel with implementation, but may execute it only after the Tech Lead has approved both the implementation and the test plan.
+6. Failed technical review returns the work to Engineer (or the test plan to QA) with actionable findings.
+7. Failed QA execution returns the work to Engineer with reproducible findings.
+8. User approval is required at both approval gates in the workflow.
+9. Production deployment requires explicit user authorization.
+10. Never commit secrets or directly modify production state.
+11. Prefer reviewable commits and pull requests. Preserve unrelated user changes.
+12. When creating Kanban tasks, do not set a model or provider. The worker then uses the model configured for its profile; a model on the task overrides it.
 {% if (agent_git_name and agent_git_email) or agent_commit_trailers %}
 
 ## Commit conventions

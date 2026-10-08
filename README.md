@@ -4,7 +4,7 @@ A reproducible bootstrap for running a [Hermes Agent](https://github.com/NousRes
 
 ## How it works
 
-You talk to the Head of Engineering (`hoe`) over Telegram. It turns your request into a requirement and a high-level design, asks for your approval, then hands the work through Hermes Kanban to the specialist profiles. A second approval gate comes before anything is merged. The main Hermes profile is also reachable over Telegram for general tasks on the host.
+You talk to the Head of Engineering (`hoe`) over Telegram. It turns your request into a requirement and a high-level design, asks for your approval, then hands the work through Hermes Kanban to the specialist profiles. After the Tech Lead's plan, the Engineer implements while QA writes an independent, UX-first test plan; the Tech Lead reviews both, and only then does QA execute the plan. A second approval gate comes before anything is merged. The main Hermes profile is also reachable over Telegram for general tasks on the host.
 
 ```mermaid
 flowchart TD
@@ -13,10 +13,13 @@ flowchart TD
     req --> gate1{{Approval gate 1:<br/>you approve the requirement}}
     gate1 --> kanban[(Hermes Kanban)]
     kanban --> tl[Tech Lead<br/>implementation plan<br/>docs/implementation]
-    tl --> eng[Engineer<br/>implementation + tests]
-    eng --> review[Tech Lead review]
+    tl --> eng[Engineer<br/>implementation + self-tests]
+    tl --> qaplan[QA<br/>UX / end-to-end test plan<br/>docs/qa/*-test-plan.md]
+    eng --> review[Tech Lead review<br/>implementation + test plan]
+    qaplan --> review
     review -- changes required --> eng
-    review --> qa[QA<br/>verifies against the requirement<br/>docs/qa]
+    review -- plan amendments --> qaplan
+    review --> qa[QA<br/>executes the approved plan<br/>docs/qa]
     qa -- fail --> eng
     qa --> gate2{{Approval gate 2:<br/>you approve the result}}
     gate2 --> merge([Ready to merge])

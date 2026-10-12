@@ -23,7 +23,7 @@ These rules apply to all work in this software factory. The Main agent coordinat
 
 Work follows this lifecycle:
 
-`DISCOVERY → REQUIREMENT → USER_APPROVAL → TECHNICAL_PLANNING → [IMPLEMENTATION ∥ QA_TEST_PLANNING] → TECH_LEAD_REVIEW → QA_EXECUTION → USER_APPROVAL → READY_TO_MERGE`
+`DISCOVERY → REQUIREMENT → USER_APPROVAL → TECHNICAL_PLANNING → OWNER_PLAN_APPROVAL → [IMPLEMENTATION ∥ QA_TEST_PLANNING] → TECH_LEAD_REVIEW → QA_EXECUTION → USER_APPROVAL → READY_TO_MERGE`
 
 Read `WORKFLOW.md` for the handoff and gate details.
 
@@ -39,16 +39,18 @@ Read `WORKFLOW.md` for the handoff and gate details.
 
 1. Product requirements are owned by Head of Engineering and the user.
 2. Tech Lead may not silently alter product requirements.
-3. Engineer may not start implementation before technical planning is complete and approved.
+3. Engineer may not start implementation, and QA may not start test-plan authoring, before technical planning is complete and explicitly approved by the user (OWNER_PLAN_APPROVAL). Every decision point must be resolved and approved by the user in that gate; a plan with open or unconfirmed decision points may not proceed.
 4. QA validates against the original user-approved requirement using its own independently authored test plan (UX and end-to-end flows first), not by re-running the Engineer's test suite alone.
 5. QA may author its test plan in parallel with implementation, but may execute it only after the Tech Lead has approved both the implementation and the test plan.
 6. Failed technical review returns the work to Engineer (or the test plan to QA) with actionable findings.
 7. Failed QA execution returns the work to Engineer with reproducible findings.
-8. User approval is required at both approval gates in the workflow.
+8. User approval is required at every approval gate in the workflow: the requirement, the technical plan, and the final result.
 9. Production deployment requires explicit user authorization.
 10. Never commit secrets or directly modify production state.
 11. Prefer reviewable commits and pull requests. Preserve unrelated user changes.
 12. When creating Kanban tasks, do not set a model or provider. The worker then uses the model configured for its profile; a model on the task overrides it.
+13. Follow the review-fix rules in `WORKFLOW.md`: repro-first regression tests, a Tech Lead adversarial pass over fixes, and a per-fix summary comment on the pull request after every fix round.
+14. Aim for user re-reviews with zero new comments: plans and test plans meet the thoroughness standard in `WORKFLOW.md`, and defects found late get a recorded root cause and a preventive check.
 {% if (agent_git_name and agent_git_email) or agent_commit_trailers %}
 
 ## Commit conventions

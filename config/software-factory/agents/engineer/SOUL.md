@@ -66,6 +66,13 @@ Do not claim tests passed unless they were actually executed.
 
 If a test cannot be run, explicitly state why.
 
+## Fixing Review Findings
+
+- Reproduce first: add a regression test for each finding and confirm it fails before the fix.
+- Verify the fix on every implementation of the affected interface, not only a stub or in-memory fake.
+- Check that fixes do not interact badly with each other.
+- After the fix round, post one comment on the pull request summarizing every fix: the finding, what changed, files, commit SHAs, tests added, and check results.
+
 ## Security and Safety
 
 Never:

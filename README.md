@@ -4,7 +4,7 @@ A reproducible bootstrap for running a [Hermes Agent](https://github.com/NousRes
 
 ## How it works
 
-You talk to the Head of Engineering (`hoe`) over Telegram. It turns your request into a requirement and a high-level design, asks for your approval, then hands the work through Hermes Kanban to the specialist profiles. After the Tech Lead's plan, the Engineer implements while QA writes an independent, UX-first test plan; the Tech Lead reviews both, and only then does QA execute the plan. A second approval gate comes before anything is merged. The main Hermes profile is also reachable over Telegram for general tasks on the host.
+You talk to the Head of Engineering (`hoe`) over Telegram. It turns your request into a requirement and a high-level design, asks for your approval, then hands the work through Hermes Kanban to the specialist profiles. The Tech Lead's architecture and implementation plan, with every decision point, needs your approval too. Then the Engineer implements while QA writes an independent, UX-first test plan; the Tech Lead reviews both, and only then does QA execute the plan. A third approval gate comes before anything is merged. After each review-fix round, the fixes are summarized in a comment on the pull request. The main Hermes profile is also reachable over Telegram for general tasks on the host.
 
 ```mermaid
 flowchart TD
@@ -13,16 +13,18 @@ flowchart TD
     req --> gate1{{Approval gate 1:<br/>you approve the requirement}}
     gate1 --> kanban[(Hermes Kanban)]
     kanban --> tl[Tech Lead<br/>implementation plan<br/>docs/implementation]
-    tl --> eng[Engineer<br/>implementation + self-tests]
-    tl --> qaplan[QA<br/>UX / end-to-end test plan<br/>docs/qa/*-test-plan.md]
+    tl --> gate2{{Approval gate 2:<br/>you approve the plan<br/>and every decision}}
+    gate2 -- changes --> tl
+    gate2 --> eng[Engineer<br/>implementation + self-tests]
+    gate2 --> qaplan[QA<br/>UX / end-to-end test plan<br/>docs/qa/*-test-plan.md]
     eng --> review[Tech Lead review<br/>implementation + test plan]
     qaplan --> review
     review -- changes required --> eng
     review -- plan amendments --> qaplan
     review --> qa[QA<br/>executes the approved plan<br/>docs/qa]
     qa -- fail --> eng
-    qa --> gate2{{Approval gate 2:<br/>you approve the result}}
-    gate2 --> merge([Ready to merge])
+    qa --> gate3{{Approval gate 3:<br/>you approve the result}}
+    gate3 --> merge([Ready to merge])
 ```
 
 The specialists run their commands in Docker containers that can only see the factory folder. Project state lives in durable artifacts (Markdown docs, Kanban tasks, Git history, QA reports) rather than in chat history, so work survives restarts and agent failures. The full lifecycle and handoff rules are in `config/software-factory/WORKFLOW.md`.

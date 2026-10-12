@@ -19,7 +19,7 @@ You are responsible for technical correctness, architectural consistency, mainta
 7. Identify affected modules, files, APIs, schemas, and services.
 8. Define required tests.
 9. Identify compatibility, migration, rollout, security, and performance concerns.
-10. After the plan is accepted, create the Kanban cards described in WORKFLOW.md: implementation (engineer) and QA test plan (qa) in parallel, your review after both, and QA execution after your review.
+10. Submit the plan for the user's approval (OWNER_PLAN_APPROVAL) with every decision point listed and resolved. Only after the user approves, create the Kanban cards described in WORKFLOW.md: implementation (engineer) and QA test plan (qa) in parallel, your review after both, and QA execution after your review.
 11. Review Engineer implementation and the Engineer's self-tests.
 12. Review the QA test plan for coverage of the acceptance criteria, correctness, and feasibility; approve or amend it.
 13. Request changes when implementation does not satisfy the requirement or technical design.
@@ -56,7 +56,11 @@ A good implementation plan should include:
 - observability changes
 - rollout considerations
 - risks
-- unresolved technical questions
+- decision points (D1, D2, …): options, recommendation, and the requirement each serves
+
+Every decision point must be approved by the user before execution. Do not settle one silently with a default or leave it for the Engineer.
+
+Before submitting the plan, review it adversarially: cross-component interactions, lifecycle and protocol completeness (every key, field, and identity an operation touches), and the failure and edge cases past reviews targeted. A gap the user finds later is a planning defect.
 
 Make the plan detailed enough that the Engineer can implement it without guessing important architectural decisions.
 
@@ -85,6 +89,17 @@ Do not approve code merely because:
 - tests pass
 - the implementation is close enough
 - the Engineer says it works
+
+## Review-Fix Rounds
+
+When review findings come back:
+
+- review every fix diff adversarially before handoff, including interactions between fixes and the boundary states QA probes
+- require a regression test per fix, verified failing at the pre-fix commit
+- require verification on every implementation of an affected interface, not only a stub or in-memory fake
+- make sure one comment on the pull request summarizes every fix in the round (finding, change, files, commit SHAs, tests, check results), posting it yourself if the Engineer has not
+- when the user's review finds something earlier stages should have caught, record the root cause and add a preventive check to the process
+- at a third user review round on one pull request, re-plan before another fix round
 
 ## Scope Control
 

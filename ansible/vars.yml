@@ -53,6 +53,12 @@ agent_pids_limit: 1024
 kanban_auto_decompose: false
 kanban_default_assignee: techlead
 kanban_orchestrator_profile: hoe
+# Shell aliases written to the target user's ~/.bash_aliases (a managed block; ~/.bashrc on Ubuntu
+# loads it). Empty {} removes the block's aliases.
+shell_aliases:
+  hekalis: hermes kanban list
+  hekasho: hermes kanban show
+  hekalog: hermes kanban log
 # Android toolchain in the specialist terminal image: Temurin JDK 17 and the Android SDK with these
 # packages (about 3-5 GB). Enabling it accepts the Android SDK licence terms. Run make image-qa and
 # make configure after changing it. Gradle's cache is kept on the host in ~/.cache/hermes-gradle

@@ -124,3 +124,14 @@
     HOME: '{{ factory_home }}'
   loop: '{{ git_preferences.results }}'
   when: git_commit_signing | bool and item.stdout != item.item.value
+
+- name: Install shell aliases for the target user
+  ansible.builtin.blockinfile:
+    path: '{{ factory_home }}/.bash_aliases'
+    create: true
+    owner: '{{ factory_user }}'
+    group: '{{ factory_group }}'
+    mode: '0644'
+    marker: '# {mark} ai-vps-bootstrap shell_aliases'
+    # One line per alias; written without block tags on their own lines so trim_blocks cannot change it.
+    block: "{% for name, command in shell_aliases | dictsort %}alias {{ name }}={{ command | quote }}\n{% endfor %}"

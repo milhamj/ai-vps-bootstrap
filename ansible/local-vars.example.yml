@@ -19,6 +19,10 @@
 # kanban_auto_decompose: false
 # kanban_default_assignee: techlead
 # kanban_orchestrator_profile: hoe
+# shell_aliases:
+#   hekalis: hermes kanban list
+#   hekasho: hermes kanban show
+#   hekalog: hermes kanban log
 # android_sdk: true
 # android_sdk_packages: ['platform-tools', 'platforms;android-36', 'build-tools;36.0.0']
 # android_gradle_jvmargs: '-Xmx2g -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8'

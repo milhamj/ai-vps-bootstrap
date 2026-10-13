@@ -45,6 +45,14 @@ agent_forward_env: []
 # which Node, Java/Gradle and test databases exhaust (threads count too); a full container cannot fork
 # at all. make configure also raises it on containers that are already running.
 agent_pids_limit: 1024
+# Kanban routing, written into every profile's kanban: section. Hermes's auto-decomposer is a separate
+# model call that splits any task landing in Triage (including a task blocked twice for the same reason)
+# into child tasks; it never reads AGENTS.md and, with no profile descriptions or default_assignee, routes
+# children to the "default" profile. Off by default here; triaged tasks are re-specified by hoe instead.
+# kanban_default_assignee catches any task that would otherwise get no or an unknown assignee.
+kanban_auto_decompose: false
+kanban_default_assignee: techlead
+kanban_orchestrator_profile: hoe
 # Android toolchain in the specialist terminal image: Temurin JDK 17 and the Android SDK with these
 # packages (about 3-5 GB). Enabling it accepts the Android SDK licence terms. Run make image-qa and
 # make configure after changing it. Gradle's cache is kept on the host in ~/.cache/hermes-gradle

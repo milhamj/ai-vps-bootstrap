@@ -48,10 +48,11 @@ Read `WORKFLOW.md` for the handoff and gate details.
 9. Production deployment requires explicit user authorization.
 10. Never commit secrets or directly modify production state.
 11. Prefer reviewable commits and pull requests. Preserve unrelated user changes.
-12. When creating Kanban tasks, do not set a model or provider. The worker then uses the model configured for its profile; a model on the task overrides it.
+12. When creating Kanban tasks, do not set a model or provider. The worker then uses the model configured for its profile; a model on the task overrides it. Always set an explicit specialist assignee: `techlead` for planning, review and verification, `engineer` for implementation, `qa` for test planning and testing. Never assign `default`.
 13. Follow the review-fix rules in `WORKFLOW.md`: repro-first regression tests, a Tech Lead adversarial pass over fixes, and a per-fix summary comment on the pull request after every fix round.
 14. Aim for user re-reviews with zero new comments: plans and test plans meet the thoroughness standard in `WORKFLOW.md`, and defects found late get a recorded root cause and a preventive check.
 15. Leave no processes behind: stop everything you started before you finish a task. See [Process hygiene in Docker terminals](#process-hygiene-in-docker-terminals).
+16. A task blocked twice for the same reason moves to the Triage column. Head of Engineering handles triaged tasks: fix the blocker (or ask the user), then move the task back with a specific spec and a specialist assignee. Do not run `hermes kanban decompose` on it.
 
 ## Process hygiene in Docker terminals
 

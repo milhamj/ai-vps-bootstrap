@@ -16,6 +16,9 @@
 # agent_git_email: 'id+my-agent-bot@users.noreply.github.com'
 # agent_forward_env: [GH_TOKEN]
 # agent_pids_limit: 1024
+# kanban_auto_decompose: false
+# kanban_default_assignee: techlead
+# kanban_orchestrator_profile: hoe
 # android_sdk: true
 # android_sdk_packages: ['platform-tools', 'platforms;android-36', 'build-tools;36.0.0']
 # android_gradle_jvmargs: '-Xmx2g -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8'

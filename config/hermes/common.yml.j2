@@ -11,6 +11,11 @@ fallback_model:
 # and leaving it enabled blocks Kanban tasks with "proxy.enabled is true but iron-proxy is not configured".
 proxy:
   enabled: false
+# Kanban routing: no auto-decomposition, and unassigned work goes to a specialist, never "default".
+kanban:
+  auto_decompose: {{ kanban_auto_decompose | bool | to_json }}
+  default_assignee: '{{ kanban_default_assignee }}'
+  orchestrator_profile: '{{ kanban_orchestrator_profile }}'
 compression:
   threshold: 0.5
 browser:

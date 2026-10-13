@@ -19,6 +19,9 @@
           - rendered.model == item.model
           - "(rendered.fallback_model | default({})) == (dict(provider=item.fallback.provider, model=item.fallback.default) if item.fallback else {})"
           - rendered.proxy.enabled == false
+          - rendered.kanban.auto_decompose == (kanban_auto_decompose | bool)
+          - rendered.kanban.default_assignee == kanban_default_assignee
+          - rendered.kanban.orchestrator_profile == kanban_orchestrator_profile
           - rendered.compression.threshold == 0.5
           - rendered.browser.cloud_provider == 'local'
           - rendered.platform_toolsets.cli == item.toolsets

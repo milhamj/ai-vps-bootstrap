@@ -76,6 +76,15 @@ def main() -> int:
                 errors.append(f"{name}: fallback_model does not match the configured fallback preset")
         if (config.get("proxy") or {}).get("enabled") is not False:
             errors.append(f"{name}: proxy.enabled must be false for the OAuth provider")
+        kanban = config.get("kanban") or {}
+        expected_kanban = {
+            "auto_decompose": bool(settings["kanban_auto_decompose"]),
+            "default_assignee": settings["kanban_default_assignee"],
+            "orchestrator_profile": settings["kanban_orchestrator_profile"],
+        }
+        for key, value in expected_kanban.items():
+            if kanban.get(key) != value:
+                errors.append(f"{name}: kanban.{key} must be {value!r}")
         if (config.get("compression") or {}).get("threshold") != 0.5:
             errors.append(f"{name}: compression.threshold must be 0.5")
         if (config.get("browser") or {}).get("cloud_provider") != "local":

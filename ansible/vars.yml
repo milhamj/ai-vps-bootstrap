@@ -41,6 +41,10 @@ agent_git_email: ''
 # name. Set to [GH_TOKEN] and put GH_TOKEN=<token> in ~/.hermes/profiles/<profile>/.env (mode 600)
 # for the profiles that push or open pull requests. Values never go in this repository.
 agent_forward_env: []
+# Process/thread limit for each specialist Docker terminal (docker --pids-limit). Hermes defaults to 256,
+# which Node, Java/Gradle and test databases exhaust (threads count too); a full container cannot fork
+# at all. make configure also raises it on containers that are already running.
+agent_pids_limit: 1024
 # Android toolchain in the specialist terminal image: Temurin JDK 17 and the Android SDK with these
 # packages (about 3-5 GB). Enabling it accepts the Android SDK licence terms. Run make image-qa and
 # make configure after changing it. Gradle's cache is kept on the host in ~/.cache/hermes-gradle

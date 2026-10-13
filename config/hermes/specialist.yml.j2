@@ -12,3 +12,5 @@ terminal:
     - '{{ factory_home }}/.cache/hermes-gradle:/home/hermes/.gradle'
 {% endif %}
   docker_forward_env: {{ agent_forward_env | to_json }}
+  # Appended after Hermes's own --pids-limit 256, so this value wins.
+  docker_extra_args: ['--pids-limit', '{{ agent_pids_limit }}']

@@ -79,6 +79,13 @@ docker run --rm "$docker_image" sh -c 'test -w /ms-playwright' || {
   echo 'FAIL: /ms-playwright is not writable by the container user; run make image-qa' >&2
   exit 1
 }
+pids_limit=$(setting agent_pids_limit)
+for id in $(docker ps -q --filter "ancestor=$docker_image"); do
+  [[ $(docker inspect -f '{{.HostConfig.PidsLimit}}' "$id") == "$pids_limit" ]] || {
+    echo "FAIL: running terminal container $id does not have --pids-limit $pids_limit; run make configure" >&2
+    exit 1
+  }
+done
 docker run --rm "$docker_image" gh --version >/dev/null 2>&1 || {
   echo 'FAIL: terminal image has no GitHub CLI (gh); run make image-qa' >&2
   exit 1

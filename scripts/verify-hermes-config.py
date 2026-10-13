@@ -109,6 +109,9 @@ def main() -> int:
                 errors.append(f"{name}: docker_volumes must be exactly {expected_volumes}")
             if terminal.get("docker_forward_env") != settings["agent_forward_env"]:
                 errors.append(f"{name}: docker_forward_env must be exactly agent_forward_env")
+            expected_extra = ["--pids-limit", str(settings["agent_pids_limit"])]
+            if terminal.get("docker_extra_args") != expected_extra:
+                errors.append(f"{name}: docker_extra_args must be exactly {expected_extra}")
 
     soul_paths = {
         "default": hermes_home / "SOUL.md",

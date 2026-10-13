@@ -101,3 +101,19 @@
     DBUS_SESSION_BUS_ADDRESS: 'unix:path=/run/user/{{ ansible_facts.getent_passwd[factory_user][1] }}/bus'
   loop: '{{ hermes_gateway_states.results | default([]) }}'
   when: item.rc is defined and item.rc == 0
+
+# Hermes reuses its terminal containers and sets --pids-limit only when it creates one, so a new
+# agent_pids_limit would otherwise reach only containers created later.
+- name: Apply agent_pids_limit to running specialist terminal containers
+  ansible.builtin.shell: |
+    set -euo pipefail
+    for id in $(docker ps -q --filter ancestor={{ hermes_docker_image | quote }}); do
+      if [ "$(docker inspect -f '{{ '{{' }}.HostConfig.PidsLimit{{ '}}' }}' "$id")" != {{ agent_pids_limit | quote }} ]; then
+        docker update --pids-limit {{ agent_pids_limit | quote }} "$id" >/dev/null
+        echo "UPDATED $id"
+      fi
+    done
+  args:
+    executable: /bin/bash
+  register: hermes_pids_update
+  changed_when: "'UPDATED' in hermes_pids_update.stdout"
